@@ -1453,54 +1453,92 @@
             }
 
             try {
-                // Create a professional styled canvas
+                // Create a professional styled canvas with rounded corners
                 const sourceElement = canvas || img;
                 const styledCanvas = document.createElement('canvas');
                 const ctx = styledCanvas.getContext('2d');
                 
-                const qrSize = 300;
-                const cardWidth = 440;
-                const cardHeight = 620;
+                const qrSize = 320;
+                const cardWidth = 480;
+                const cardHeight = 680;
+                const borderRadius = 24;
                 
                 styledCanvas.width = cardWidth;
                 styledCanvas.height = cardHeight;
                 
-                // Draw gradient background
+                // Helper function to draw rounded rectangle
+                function roundRect(x, y, width, height, radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + width - radius, y);
+                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    ctx.lineTo(x + width, y + height - radius);
+                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                    ctx.lineTo(x + radius, y + height);
+                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                }
+                
+                // Draw main card with rounded corners
+                roundRect(0, 0, cardWidth, cardHeight, borderRadius);
                 const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
                 bgGradient.addColorStop(0, '#667eea');
                 bgGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = bgGradient;
-                ctx.fillRect(0, 0, cardWidth, cardHeight);
+                ctx.fill();
                 
-                // Draw decorative circles
-                ctx.globalAlpha = 0.1;
+                // Draw decorative circles with blur effect
+                ctx.globalAlpha = 0.15;
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(50, 50, 80, 0, Math.PI * 2);
+                ctx.arc(60, 60, 100, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(cardWidth - 40, cardHeight - 40, 100, 0, Math.PI * 2);
+                ctx.arc(cardWidth - 50, cardHeight - 50, 120, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.globalAlpha = 1;
                 
-                // Draw header section
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                ctx.fillRect(20, 20, cardWidth - 40, 100);
-                ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 22px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('UPI PAYMENT', cardWidth / 2, 60);
-                ctx.font = '16px Inter, sans-serif';
-                ctx.fillStyle = '#64748b';
-                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, 90);
+                // Draw header section with rounded corners
+                const headerPadding = 24;
+                roundRect(headerPadding, headerPadding, cardWidth - headerPadding * 2, 90, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
                 
-                // Draw QR container
-                const qrY = 140;
+                // Header shadow effect
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 4;
+                
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 26px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerPadding + 42);
+                ctx.font = '15px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerPadding + 68);
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Draw QR container with shadow
+                const qrY = 138;
                 const qrX = (cardWidth - qrSize - 40) / 2;
                 
-                // White background for QR
+                // QR shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 8;
+                
+                roundRect(qrX, qrY, qrSize + 40, qrSize + 40, 20);
                 ctx.fillStyle = 'white';
-                ctx.fillRect(qrX, qrY, qrSize + 40, qrSize + 40);
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
                 
                 // Draw QR code
                 if (canvas) {
@@ -1518,33 +1556,51 @@
                 
                 // Draw info section
                 const infoY = qrY + qrSize + 60;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                ctx.fillRect(20, infoY, cardWidth - 40, 140);
+                const infoPadding = 24;
                 
-                // Pay to
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 4;
+                
+                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 150, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Info content
+                const infoLeft = infoPadding + 20;
+                
+                // Pay to label
                 ctx.fillStyle = '#64748b';
-                ctx.font = '14px Inter, sans-serif';
+                ctx.font = 'bold 12px Inter, sans-serif';
                 ctx.textAlign = 'left';
-                ctx.fillText('PAY TO', 40, infoY + 30);
+                ctx.fillText('PAY TO', infoLeft, infoY + 28);
+                
+                // Name
                 ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 20px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.name, 40, infoY + 55);
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 58);
                 
                 // UPI ID
-                ctx.fillStyle = '#64748b';
-                ctx.font = '13px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.upiId, 40, infoY + 80);
-                
-                // Amount
-                ctx.fillStyle = '#64748b';
+                ctx.fillStyle = '#667eea';
                 ctx.font = '14px Inter, sans-serif';
-                ctx.fillText('AMOUNT', 40, infoY + 110);
-                const amountGradient = ctx.createLinearGradient(0, infoY + 110, 200, infoY + 135);
+                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 82);
+                
+                // Amount label
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('AMOUNT', infoLeft, infoY + 110);
+                
+                // Amount value with gradient
+                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 115, infoLeft + 200, infoY + 140);
                 amountGradient.addColorStop(0, '#667eea');
                 amountGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = amountGradient;
-                ctx.font = 'bold 32px Inter, sans-serif';
-                ctx.fillText(`₹ ${currentQRInfo.amount}`, 40, infoY + 135);
+                ctx.font = 'bold 36px Inter, sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 142);
                 
                 // Convert styled canvas to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
