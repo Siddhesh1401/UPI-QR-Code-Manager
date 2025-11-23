@@ -688,6 +688,201 @@
             transform: translateY(-2px);
         }
 
+        /* QR Display Modal */
+        #qrDisplayModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #qrDisplayModal.active {
+            display: flex;
+        }
+
+        .qr-display-content {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .qr-display-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .qr-display-header h2 {
+            margin: 0 0 8px 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .qr-display-header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .qr-display-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f1f5f9;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .qr-display-close:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .qr-display-close:active {
+            transform: scale(0.95);
+        }
+
+        .qr-display-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+        }
+
+        .qr-display-qr {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-display-qr canvas,
+        .qr-display-qr img {
+            max-width: 100%;
+            height: auto !important;
+            width: auto !important;
+            display: block;
+        }
+
+        .qr-display-info {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .qr-display-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .qr-display-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .qr-display-info-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .qr-display-info-value {
+            color: #1e293b;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .qr-display-amount {
+            font-size: 1.8rem !important;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .qr-display-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .qr-display-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 54px;
+        }
+
+        .qr-display-btn-share {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .qr-display-btn-share:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .qr-display-btn-download {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .qr-display-btn-download:hover {
+            background: #f8fafc;
+        }
+
+        .qr-display-btn:active {
+            transform: scale(0.98);
+        }
+
         .download-btn:active, .share-btn:active {
             transform: translateY(0);
         }
@@ -873,17 +1068,89 @@
                 <button type="submit" class="btn btn-primary">Generate QR Code</button>
             </form>
 
-            <div id="qrcode-container" style="display: none;">
+            <div id="qrcode-container" style="display: none; visibility: hidden; position: absolute;">
                 <p style="color: #a0aec0;">Generating...</p>
             </div>
+        </div>
+    </div>
 
-            <button class="share-btn" id="shareBtn" style="display: none;" onclick="shareQR()">
-                Share QR Code 📤
-            </button>
+    <!-- QR Display Modal -->
+    <div id="qrDisplayModal">
+        <div class="qr-display-content">
+            <button class="qr-display-close" onclick="closeQRDisplay()">&times;</button>
             
-            <button class="download-btn" id="downloadBtn" style="display: none;" onclick="downloadQR()">
-                Download QR Code ⬇️
-            </button>
+            <div class="qr-display-header">
+                <h2>Payment QR Code</h2>
+                <p>Scan to pay instantly</p>
+            </div>
+
+            <div class="qr-display-box">
+                <div class="qr-display-qr" id="qrDisplayQR"></div>
+            </div>
+
+            <div class="qr-display-info">
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">Pay to</span>
+                    <span class="qr-display-info-value" id="qrDisplayName"></span>
+                </div>
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">UPI ID</span>
+                    <span class="qr-display-info-value" id="qrDisplayUPI"></span>
+                </div>
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">Amount</span>
+                    <span class="qr-display-info-value qr-display-amount" id="qrDisplayAmount"></span>
+                </div>
+            </div>
+
+            <div class="qr-display-actions">
+                <button class="qr-display-btn qr-display-btn-share" onclick="shareQR()">
+                    📤 Share
+                </button>
+                <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
+                    ⬇️ Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Display Modal -->
+    <div id="qrDisplayModal">
+        <div class="qr-display-content">
+            <button class="qr-display-close" onclick="closeQRDisplay()">&times;</button>
+            
+            <div class="qr-display-header">
+                <h2>Payment QR Code</h2>
+                <p>Scan to pay instantly</p>
+            </div>
+
+            <div class="qr-display-box">
+                <div class="qr-display-qr" id="qrDisplayQR"></div>
+            </div>
+
+            <div class="qr-display-info">
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">Pay to</span>
+                    <span class="qr-display-info-value" id="qrDisplayName"></span>
+                </div>
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">UPI ID</span>
+                    <span class="qr-display-info-value" id="qrDisplayUPI"></span>
+                </div>
+                <div class="qr-display-info-row">
+                    <span class="qr-display-info-label">Amount</span>
+                    <span class="qr-display-info-value qr-display-amount" id="qrDisplayAmount"></span>
+                </div>
+            </div>
+
+            <div class="qr-display-actions">
+                <button class="qr-display-btn qr-display-btn-share" onclick="shareQR()">
+                    📤 Share
+                </button>
+                <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
+                    ⬇️ Download
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1060,36 +1327,45 @@
             const note = `Payment to ${currentProfile.name}`;
             const upiString = `upi://pay?pa=${currentProfile.upiId}&pn=${encodeURIComponent(currentProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
-            const qrContainer = document.getElementById('qrcode-container');
-            qrContainer.innerHTML = '';
-            qrContainer.style.display = 'flex';
-            document.getElementById('downloadBtn').style.display = 'none';
-            document.getElementById('shareBtn').style.display = 'none';
+            // Generate in hidden container first
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = '';
+            container.style.display = 'flex';
 
-            // Determine QR code size based on screen width
-            const isMobile = window.innerWidth <= 768;
-            const qrSize = isMobile ? Math.min(window.innerWidth - 120, 220) : 200;
-
-            new QRCode(qrContainer, {
+            new QRCode(container, {
                 text: upiString,
-                width: qrSize,
-                height: qrSize,
+                width: 256,
+                height: 256,
                 colorDark: "#000000",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.H
             });
 
+            // Show in popup modal
             setTimeout(() => {
-                const img = qrContainer.querySelector("img");
-                if (img) {
-                    document.getElementById('shareBtn').style.display = 'block';
-                    document.getElementById('downloadBtn').style.display = 'block';
-                    // Scroll to QR code on mobile
-                    if (isMobile) {
-                        qrContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
+                const displayQR = document.getElementById('qrDisplayQR');
+                displayQR.innerHTML = '';
+                
+                new QRCode(displayQR, {
+                    text: upiString,
+                    width: 280,
+                    height: 280,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                document.getElementById('qrDisplayName').textContent = currentProfile.name;
+                document.getElementById('qrDisplayUPI').textContent = currentProfile.upiId;
+                document.getElementById('qrDisplayAmount').textContent = `₹${amount}`;
+                
+                closePaymentModal();
+                document.getElementById('qrDisplayModal').classList.add('active');
             }, 100);
+        }
+
+        function closeQRDisplay() {
+            document.getElementById('qrDisplayModal').classList.remove('active');
         }
 
         function downloadQR() {
@@ -1115,68 +1391,99 @@
             }
 
             try {
-                // Create a styled canvas with border and padding
+                // Create a professional styled canvas
                 const sourceElement = canvas || img;
                 const styledCanvas = document.createElement('canvas');
                 const ctx = styledCanvas.getContext('2d');
                 
-                const qrSize = sourceElement.width || 256;
-                const padding = 40;
-                const borderWidth = 8;
-                const topSpace = 60;
-                const bottomSpace = 50;
-                const canvasSize = qrSize + (padding * 2) + (borderWidth * 2) + topSpace + bottomSpace;
-                
-                styledCanvas.width = canvasSize;
-                styledCanvas.height = canvasSize;
-                
-                // Draw gradient border
-                const gradient = ctx.createLinearGradient(0, 0, canvasSize, canvasSize);
-                gradient.addColorStop(0, '#667eea');
-                gradient.addColorStop(1, '#764ba2');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvasSize, canvasSize);
-                
-                // Draw white background
-                ctx.fillStyle = 'white';
-                ctx.fillRect(borderWidth, borderWidth, canvasSize - borderWidth * 2, canvasSize - borderWidth * 2);
-                
-                // Get amount first
                 const amount = document.getElementById('paymentAmount').value;
+                const qrSize = 300;
+                const cardWidth = 440;
+                const cardHeight = 620;
                 
-                // Adjust QR position for top space
-                const qrY = borderWidth + padding + topSpace;
-                const qrX = borderWidth + padding;
+                styledCanvas.width = cardWidth;
+                styledCanvas.height = cardHeight;
                 
-                // Add payment details text at top
-                ctx.font = 'bold 18px Inter, sans-serif';
-                ctx.textAlign = 'center';
+                // Draw gradient background
+                const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+                bgGradient.addColorStop(0, '#667eea');
+                bgGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, cardWidth, cardHeight);
+                
+                // Draw decorative circles
+                ctx.globalAlpha = 0.1;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(50, 50, 80, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cardWidth - 40, cardHeight - 40, 100, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                // Draw header section
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.fillRect(20, 20, cardWidth - 40, 100);
                 ctx.fillStyle = '#1e293b';
-                ctx.fillText('Pay to:', canvasSize / 2, borderWidth + 25);
                 ctx.font = 'bold 22px Inter, sans-serif';
-                ctx.fillText(currentProfile.name, canvasSize / 2, borderWidth + 50);
+                ctx.textAlign = 'center';
+                ctx.fillText('UPI PAYMENT', cardWidth / 2, 60);
+                ctx.font = '16px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, 90);
+                
+                // Draw QR container
+                const qrY = 140;
+                const qrX = (cardWidth - qrSize - 40) / 2;
+                
+                // White background for QR
+                ctx.fillStyle = 'white';
+                ctx.fillRect(qrX, qrY, qrSize + 40, qrSize + 40);
                 
                 // Draw QR code
                 if (canvas) {
-                    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
+                    ctx.drawImage(canvas, qrX + 20, qrY + 20, qrSize, qrSize);
                 } else {
                     const tempImg = new Image();
                     tempImg.src = img.src;
                     await new Promise(resolve => {
                         tempImg.onload = () => {
-                            ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
+                            ctx.drawImage(tempImg, qrX + 20, qrY + 20, qrSize, qrSize);
                             resolve();
                         };
                     });
                 }
                 
-                // Bottom text with amount
-                ctx.font = 'bold 28px Inter, sans-serif';
-                const gradient2 = ctx.createLinearGradient(0, canvasSize - 40, canvasSize, canvasSize - 40);
-                gradient2.addColorStop(0, '#667eea');
-                gradient2.addColorStop(1, '#764ba2');
-                ctx.fillStyle = gradient2;
-                ctx.fillText(`Amount: ₹${amount}`, canvasSize / 2, canvasSize - borderWidth - 18);
+                // Draw info section
+                const infoY = qrY + qrSize + 60;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.fillRect(20, infoY, cardWidth - 40, 140);
+                
+                // Pay to
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('PAY TO', 40, infoY + 30);
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 20px Inter, sans-serif';
+                ctx.fillText(currentProfile.name, 40, infoY + 55);
+                
+                // UPI ID
+                ctx.fillStyle = '#64748b';
+                ctx.font = '13px Inter, sans-serif';
+                ctx.fillText(currentProfile.upiId, 40, infoY + 80);
+                
+                // Amount
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText('AMOUNT', 40, infoY + 110);
+                const amountGradient = ctx.createLinearGradient(0, infoY + 110, 200, infoY + 135);
+                amountGradient.addColorStop(0, '#667eea');
+                amountGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = amountGradient;
+                ctx.font = 'bold 32px Inter, sans-serif';
+                ctx.fillText(`₹ ${amount}`, 40, infoY + 135);
                 
                 // Convert styled canvas to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
