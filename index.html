@@ -1077,31 +1077,64 @@
         }
 
         async function shareQR() {
-            const img = document.getElementById('qrcode-container').querySelector("img");
-            if (!img) return;
+            const qrContainer = document.getElementById('qrcode-container');
+            const canvas = qrContainer.querySelector("canvas");
+            const img = qrContainer.querySelector("img");
+            
+            if (!canvas && !img) {
+                alert('Please generate a QR code first');
+                return;
+            }
 
             try {
-                // Convert base64 image to blob
-                const response = await fetch(img.src);
-                const blob = await response.blob();
-                const file = new File([blob], `upi-qr-${currentProfile.name.replace(/\s+/g, '-')}.png`, { type: 'image/png' });
+                // Get the canvas element (QRCode.js creates both canvas and img)
+                const sourceCanvas = canvas || img;
+                let blob;
+
+                if (canvas) {
+                    // Convert canvas to blob
+                    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                } else {
+                    // Convert img to blob
+                    const response = await fetch(img.src);
+                    blob = await response.blob();
+                }
+
+                const fileName = `upi-qr-${currentProfile.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
 
                 // Check if Web Share API is supported
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: `UPI Payment QR Code`,
-                        text: `Pay ${currentProfile.name} via UPI`
-                    });
+                if (navigator.share) {
+                    // First check if we can share files
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'UPI Payment QR Code',
+                            text: `Pay ₹${document.getElementById('paymentAmount').value} to ${currentProfile.name}`
+                        });
+                    } else {
+                        // Share without file (just text)
+                        await navigator.share({
+                            title: 'UPI Payment QR Code',
+                            text: `Pay ${currentProfile.name} via UPI: ${currentProfile.upiId}`
+                        });
+                        // Then trigger download
+                        downloadQR();
+                    }
                 } else {
-                    // Fallback: Copy to clipboard or download
-                    alert('Sharing not supported on this device. Use Download instead.');
+                    // Fallback: Just download
+                    alert('Share not supported on this browser. Downloading instead...');
+                    downloadQR();
                 }
             } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                    alert('Could not share QR code. Try downloading instead.');
+                if (error.name === 'AbortError') {
+                    // User cancelled, do nothing
+                    return;
                 }
+                console.error('Share error:', error);
+                // Fallback to download
+                alert('Share failed. Downloading QR code instead...');
+                downloadQR();
             }
         }
 
