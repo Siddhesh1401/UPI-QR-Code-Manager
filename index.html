@@ -591,51 +591,53 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 20px 0;
-            padding: 20px;
-            border: 2px dashed rgba(99, 102, 241, 0.4);
+            margin: 20px auto;
+            padding: 25px;
             border-radius: 20px;
-            min-height: 220px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
+            min-height: 240px;
+            background: white;
             position: relative;
-            overflow: hidden;
-        }
-
-        #qrcode-container img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-        }
-
-        #qrcode-container canvas {
-            max-width: 100%;
-            height: auto !important;
-            width: auto !important;
+            overflow: visible;
+            box-shadow: 
+                0 0 0 4px rgba(99, 102, 241, 0.1),
+                0 0 0 8px rgba(132, 94, 194, 0.08),
+                0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         #qrcode-container::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.1), transparent 30deg);
-            animation: rotate 4s linear infinite;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: linear-gradient(135deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 200%;
+            border-radius: 22px;
+            z-index: -1;
+            animation: gradientShift 3s ease infinite;
         }
 
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
-        #qrcode-container > * {
+        #qrcode-container img,
+        #qrcode-container canvas {
+            display: block;
+            max-width: 100%;
+            height: auto !important;
+            width: auto !important;
+            border-radius: 8px;
             position: relative;
             z-index: 1;
         }
 
         #qrcode-container p {
             color: #64748b;
+            position: relative;
+            z-index: 1;
         }
 
         .download-btn, .share-btn {
@@ -730,14 +732,17 @@
             }
             
             .modal {
-                align-items: flex-end;
+                align-items: center;
+                justify-content: flex-end;
+                padding-bottom: env(safe-area-inset-bottom);
             }
 
             .modal-content {
                 padding: 20px;
                 border-radius: 24px 24px 0 0;
-                max-height: 90vh;
+                max-height: 88vh;
                 margin: 0;
+                width: 100%;
             }
 
             .main-content {
@@ -760,8 +765,9 @@
             }
 
             #qrcode-container {
-                padding: 16px;
-                min-height: 200px;
+                padding: 20px;
+                min-height: 220px;
+                margin: 16px auto;
             }
 
             .payee-info {
@@ -853,12 +859,14 @@
                 <p id="payeeUpiId"></p>
             </div>
 
-            <div class="form-group">
-                <label for="paymentAmount">Enter Amount (₹) *</label>
-                <input type="number" id="paymentAmount" placeholder="100" step="0.01" min="0.01" required inputmode="decimal">
-            </div>
+            <form id="qrForm" onsubmit="generateQR(); return false;">
+                <div class="form-group">
+                    <label for="paymentAmount">Enter Amount (₹) *</label>
+                    <input type="number" id="paymentAmount" placeholder="100" step="0.01" min="0.01" required inputmode="decimal">
+                </div>
 
-            <button class="btn btn-primary" onclick="generateQR()">Generate QR Code</button>
+                <button type="submit" class="btn btn-primary">Generate QR Code</button>
+            </form>
 
             <div id="qrcode-container" style="display: none;">
                 <p style="color: #a0aec0;">Generating...</p>
@@ -1018,7 +1026,7 @@
             currentProfile = upiProfiles[index];
             document.getElementById('payeeName').textContent = currentProfile.name;
             document.getElementById('payeeUpiId').textContent = currentProfile.upiId;
-            document.getElementById('paymentAmount').value = '';
+            document.getElementById('qrForm').reset();
             document.getElementById('qrcode-container').style.display = 'none';
             document.getElementById('downloadBtn').style.display = 'none';
             document.getElementById('shareBtn').style.display = 'none';
@@ -1102,53 +1110,83 @@
             }
 
             try {
-                // Get the canvas element (QRCode.js creates both canvas and img)
-                const sourceCanvas = canvas || img;
-                let blob;
-
+                // Create a styled canvas with border and padding
+                const sourceElement = canvas || img;
+                const styledCanvas = document.createElement('canvas');
+                const ctx = styledCanvas.getContext('2d');
+                
+                const qrSize = sourceElement.width || 256;
+                const padding = 40;
+                const borderWidth = 8;
+                const canvasSize = qrSize + (padding * 2) + (borderWidth * 2);
+                
+                styledCanvas.width = canvasSize;
+                styledCanvas.height = canvasSize;
+                
+                // Draw gradient border
+                const gradient = ctx.createLinearGradient(0, 0, canvasSize, canvasSize);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvasSize, canvasSize);
+                
+                // Draw white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(borderWidth, borderWidth, canvasSize - borderWidth * 2, canvasSize - borderWidth * 2);
+                
+                // Draw QR code
                 if (canvas) {
-                    // Convert canvas to blob
-                    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    ctx.drawImage(canvas, borderWidth + padding, borderWidth + padding, qrSize, qrSize);
                 } else {
-                    // Convert img to blob
-                    const response = await fetch(img.src);
-                    blob = await response.blob();
+                    const tempImg = new Image();
+                    tempImg.src = img.src;
+                    await new Promise(resolve => {
+                        tempImg.onload = () => {
+                            ctx.drawImage(tempImg, borderWidth + padding, borderWidth + padding, qrSize, qrSize);
+                            resolve();
+                        };
+                    });
                 }
-
-                const fileName = `upi-qr-${currentProfile.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
+                
+                // Convert styled canvas to blob
+                const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
+                const amount = document.getElementById('paymentAmount').value;
+                const fileName = `upi-payment-${currentProfile.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
+                
+                // Create custom message
+                const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentProfile.name}*\n💰 Amount: *₹${amount}*\n🆔 UPI ID: ${currentProfile.upiId}\n\n📱 Scan the QR code to pay instantly!`;
 
                 // Check if Web Share API is supported
                 if (navigator.share) {
-                    // First check if we can share files
+                    // Try sharing with file and message
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         await navigator.share({
                             files: [file],
                             title: 'UPI Payment QR Code',
-                            text: `Pay ₹${document.getElementById('paymentAmount').value} to ${currentProfile.name}`
+                            text: message
                         });
                     } else {
-                        // Share without file (just text)
+                        // Share only message, then download
                         await navigator.share({
-                            title: 'UPI Payment QR Code',
-                            text: `Pay ${currentProfile.name} via UPI: ${currentProfile.upiId}`
+                            title: 'UPI Payment Request',
+                            text: message
                         });
-                        // Then trigger download
                         downloadQR();
                     }
                 } else {
-                    // Fallback: Just download
-                    alert('Share not supported on this browser. Downloading instead...');
+                    // Fallback: Copy message and download
+                    if (navigator.clipboard) {
+                        await navigator.clipboard.writeText(message);
+                        alert('✅ Payment details copied!\nDownloading QR code...');
+                    }
                     downloadQR();
                 }
             } catch (error) {
                 if (error.name === 'AbortError') {
-                    // User cancelled, do nothing
                     return;
                 }
                 console.error('Share error:', error);
-                // Fallback to download
-                alert('Share failed. Downloading QR code instead...');
                 downloadQR();
             }
         }
@@ -1160,14 +1198,6 @@
 
         document.getElementById('paymentModal').addEventListener('click', function(e) {
             if (e.target === this) closePaymentModal();
-        });
-
-        // Enter key to generate QR
-        document.getElementById('paymentAmount').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                generateQR();
-            }
         });
 
         // Initialize
