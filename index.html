@@ -451,6 +451,7 @@
 
         .form-group {
             margin-bottom: 24px;
+            width: 100%;
         }
 
         .form-group label {
@@ -460,6 +461,7 @@
             color: #e2e8f0;
             font-size: 1rem;
             letter-spacing: 0.2px;
+            text-align: left;
         }
 
         .form-group input {
@@ -476,6 +478,7 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
+            box-sizing: border-box;
         }
 
         .form-group input:focus {
@@ -559,7 +562,8 @@
 
         /* Payment Modal */
         .payment-content {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
             padding-bottom: 20px;
         }
 
@@ -643,6 +647,7 @@
         .download-btn, .share-btn {
             width: 100%;
             padding: 16px;
+            box-sizing: border-box;
             color: white;
             border: none;
             border-radius: 14px;
@@ -1118,7 +1123,9 @@
                 const qrSize = sourceElement.width || 256;
                 const padding = 40;
                 const borderWidth = 8;
-                const canvasSize = qrSize + (padding * 2) + (borderWidth * 2);
+                const topSpace = 60;
+                const bottomSpace = 50;
+                const canvasSize = qrSize + (padding * 2) + (borderWidth * 2) + topSpace + bottomSpace;
                 
                 styledCanvas.width = canvasSize;
                 styledCanvas.height = canvasSize;
@@ -1134,23 +1141,45 @@
                 ctx.fillStyle = 'white';
                 ctx.fillRect(borderWidth, borderWidth, canvasSize - borderWidth * 2, canvasSize - borderWidth * 2);
                 
+                // Get amount first
+                const amount = document.getElementById('paymentAmount').value;
+                
+                // Adjust QR position for top space
+                const qrY = borderWidth + padding + topSpace;
+                const qrX = borderWidth + padding;
+                
+                // Add payment details text at top
+                ctx.font = 'bold 18px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#1e293b';
+                ctx.fillText('Pay to:', canvasSize / 2, borderWidth + 25);
+                ctx.font = 'bold 22px Inter, sans-serif';
+                ctx.fillText(currentProfile.name, canvasSize / 2, borderWidth + 50);
+                
                 // Draw QR code
                 if (canvas) {
-                    ctx.drawImage(canvas, borderWidth + padding, borderWidth + padding, qrSize, qrSize);
+                    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
                 } else {
                     const tempImg = new Image();
                     tempImg.src = img.src;
                     await new Promise(resolve => {
                         tempImg.onload = () => {
-                            ctx.drawImage(tempImg, borderWidth + padding, borderWidth + padding, qrSize, qrSize);
+                            ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
                             resolve();
                         };
                     });
                 }
                 
+                // Bottom text with amount
+                ctx.font = 'bold 28px Inter, sans-serif';
+                const gradient2 = ctx.createLinearGradient(0, canvasSize - 40, canvasSize, canvasSize - 40);
+                gradient2.addColorStop(0, '#667eea');
+                gradient2.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient2;
+                ctx.fillText(`Amount: ₹${amount}`, canvasSize / 2, canvasSize - borderWidth - 18);
+                
                 // Convert styled canvas to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
-                const amount = document.getElementById('paymentAmount').value;
                 const fileName = `upi-payment-${currentProfile.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
