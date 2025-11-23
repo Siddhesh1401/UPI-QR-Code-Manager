@@ -2,11 +2,13 @@
   "name": "UPI QR Manager",
   "short_name": "UPI Manager",
   "description": "Manage multiple UPI IDs and generate QR codes for payments",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0e27",
   "theme_color": "#667eea",
   "orientation": "portrait",
+  "categories": ["finance", "utilities"],
   "icons": [
     {
       "src": "icon.svg",
