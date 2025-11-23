@@ -1340,6 +1340,9 @@
         }
 
         // QR Code Generation
+        // Store current QR info globally
+        let currentQRInfo = null;
+
         function generateQR() {
             const amount = document.getElementById('paymentAmount').value.trim();
 
@@ -1350,6 +1353,13 @@
 
             const note = `Payment to ${currentProfile.name}`;
             const upiString = `upi://pay?pa=${currentProfile.upiId}&pn=${encodeURIComponent(currentProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+            // Store QR info for share/download
+            currentQRInfo = {
+                name: currentProfile.name,
+                upiId: currentProfile.upiId,
+                amount: amount
+            };
 
             // Generate in hidden container first
             const container = document.getElementById('qrcode-container');
@@ -1379,9 +1389,9 @@
                     correctLevel: QRCode.CorrectLevel.H
                 });
 
-                document.getElementById('qrDisplayName').textContent = currentProfile.name;
-                document.getElementById('qrDisplayUPI').textContent = currentProfile.upiId;
-                document.getElementById('qrDisplayAmount').textContent = `₹${amount}`;
+                document.getElementById('qrDisplayName').textContent = currentQRInfo.name;
+                document.getElementById('qrDisplayUPI').textContent = currentQRInfo.upiId;
+                document.getElementById('qrDisplayAmount').textContent = `₹${currentQRInfo.amount}`;
                 
                 closePaymentModal();
                 document.getElementById('qrDisplayModal').classList.add('active');
@@ -1393,6 +1403,11 @@
         }
 
         function downloadQR() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+
             // Try to get from display modal first
             let img = document.getElementById('qrDisplayQR').querySelector("img");
             
@@ -1404,12 +1419,12 @@
             if (img) {
                 const link = document.createElement('a');
                 link.href = img.src;
-                link.download = `upi-qr-${currentProfile.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
+                link.download = `upi-qr-${currentQRInfo.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             } else {
-                alert('⚠️ Please generate a QR code first');
+                alert('⚠️ QR code not found');
             }
         }
 
@@ -1432,13 +1447,17 @@
                 return;
             }
 
+            if (!currentQRInfo) {
+                alert('⚠️ QR information not found');
+                return;
+            }
+
             try {
                 // Create a professional styled canvas
                 const sourceElement = canvas || img;
                 const styledCanvas = document.createElement('canvas');
                 const ctx = styledCanvas.getContext('2d');
                 
-                const amount = document.getElementById('paymentAmount').value;
                 const qrSize = 300;
                 const cardWidth = 440;
                 const cardHeight = 620;
@@ -1509,12 +1528,12 @@
                 ctx.fillText('PAY TO', 40, infoY + 30);
                 ctx.fillStyle = '#1e293b';
                 ctx.font = 'bold 20px Inter, sans-serif';
-                ctx.fillText(currentProfile.name, 40, infoY + 55);
+                ctx.fillText(currentQRInfo.name, 40, infoY + 55);
                 
                 // UPI ID
                 ctx.fillStyle = '#64748b';
                 ctx.font = '13px Inter, sans-serif';
-                ctx.fillText(currentProfile.upiId, 40, infoY + 80);
+                ctx.fillText(currentQRInfo.upiId, 40, infoY + 80);
                 
                 // Amount
                 ctx.fillStyle = '#64748b';
@@ -1525,15 +1544,15 @@
                 amountGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = amountGradient;
                 ctx.font = 'bold 32px Inter, sans-serif';
-                ctx.fillText(`₹ ${amount}`, 40, infoY + 135);
+                ctx.fillText(`₹ ${currentQRInfo.amount}`, 40, infoY + 135);
                 
                 // Convert styled canvas to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
-                const fileName = `upi-payment-${currentProfile.name.replace(/\s+/g, '-')}.png`;
+                const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
                 // Create custom message
-                const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentProfile.name}*\n💰 Amount: *₹${amount}*\n🆔 UPI ID: ${currentProfile.upiId}\n\n📱 Scan the QR code to pay instantly!`;
+                const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code to pay instantly!`;
 
                 // Check if Web Share API is supported
                 if (navigator.share) {
