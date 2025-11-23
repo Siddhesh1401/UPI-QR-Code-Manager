@@ -1295,16 +1295,34 @@
 
         // Payment Modal Functions
         function openPaymentModal(index) {
-            currentProfile = upiProfiles[index];
-            document.getElementById('payeeName').textContent = currentProfile.name;
-            document.getElementById('payeeUpiId').textContent = currentProfile.upiId;
-            document.getElementById('qrForm').reset();
-            document.getElementById('paymentModal').classList.add('active');
-            
-            // Auto-focus amount input after modal animation
-            setTimeout(() => {
-                document.getElementById('paymentAmount').focus();
-            }, 400);
+            try {
+                currentProfile = upiProfiles[index];
+                if (!currentProfile) {
+                    console.error('Profile not found:', index);
+                    return;
+                }
+                document.getElementById('payeeName').textContent = currentProfile.name;
+                document.getElementById('payeeUpiId').textContent = currentProfile.upiId;
+                
+                const form = document.getElementById('qrForm');
+                if (form) form.reset();
+                
+                const modal = document.getElementById('paymentModal');
+                if (modal) {
+                    modal.classList.add('active');
+                } else {
+                    console.error('Payment modal not found');
+                }
+                
+                // Auto-focus amount input after modal animation
+                setTimeout(() => {
+                    const amountInput = document.getElementById('paymentAmount');
+                    if (amountInput) amountInput.focus();
+                }, 400);
+            } catch (error) {
+                console.error('Error opening payment modal:', error);
+                alert('Error opening payment form. Please try again.');
+            }
         }
 
         function closePaymentModal() {
