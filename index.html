@@ -926,9 +926,13 @@
             }
 
             .add-btn {
-                padding: 12px 20px;
-                font-size: 0.95rem;
+                padding: 10px 16px;
+                font-size: 0.9rem;
                 min-height: 48px;
+            }
+            
+            .header > div {
+                gap: 8px !important;
             }
             
             .modal {
@@ -998,7 +1002,12 @@
     <!-- Header -->
     <div class="header">
         <h1>💳 UPI Manager</h1>
-        <button class="add-btn" onclick="openAddModal()">+ Add UPI</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
+                🔄 Refresh
+            </button>
+            <button class="add-btn" onclick="openAddModal()">+ Add UPI</button>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -1384,7 +1393,14 @@
         }
 
         function downloadQR() {
-            const img = document.getElementById('qrcode-container').querySelector("img");
+            // Try to get from display modal first
+            let img = document.getElementById('qrDisplayQR').querySelector("img");
+            
+            // Fallback to hidden container
+            if (!img) {
+                img = document.getElementById('qrcode-container').querySelector("img");
+            }
+            
             if (img) {
                 const link = document.createElement('a');
                 link.href = img.src;
@@ -1392,13 +1408,24 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            } else {
+                alert('⚠️ Please generate a QR code first');
             }
         }
 
         async function shareQR() {
+            // Get QR from the display modal instead of hidden container
+            const qrDisplayContainer = document.getElementById('qrDisplayQR');
             const qrContainer = document.getElementById('qrcode-container');
-            const canvas = qrContainer.querySelector("canvas");
-            const img = qrContainer.querySelector("img");
+            
+            let canvas = qrDisplayContainer.querySelector("canvas");
+            let img = qrDisplayContainer.querySelector("img");
+            
+            // Fallback to hidden container if display modal is empty
+            if (!canvas && !img) {
+                canvas = qrContainer.querySelector("canvas");
+                img = qrContainer.querySelector("img");
+            }
             
             if (!canvas && !img) {
                 alert('Please generate a QR code first');
