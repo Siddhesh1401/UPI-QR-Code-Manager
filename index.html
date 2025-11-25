@@ -548,6 +548,110 @@
             transform: scale(0.95);
         }
 
+        /* Color Picker */
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .color-picker input[type="radio"] {
+            display: none;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .color-option:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+
+        .color-picker input[type="radio"]:checked + .color-option {
+            border-color: white;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.3), 0 8px 20px rgba(0,0,0,0.25);
+            transform: scale(1.1);
+        }
+
+        .color-option::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .color-picker input[type="radio"]:checked + .color-option::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Enhanced Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .card {
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+
+        .btn:active {
+            animation: pulse 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            animation: slideUp 0.4s ease;
+        }
+
+        .add-btn:hover {
+            animation: pulse 0.6s ease infinite;
+        }
+
+        .card:hover .card-actions button {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 12px;
@@ -1106,6 +1210,29 @@
                 <input type="text" id="modalName" placeholder="e.g. John Doe" required>
             </div>
 
+            <div class="form-group">
+                <label for="modalColor">Card Color</label>
+                <div class="color-picker">
+                    <input type="radio" name="cardColor" value="default" id="color-default" checked>
+                    <label for="color-default" class="color-option" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></label>
+                    
+                    <input type="radio" name="cardColor" value="blue" id="color-blue">
+                    <label for="color-blue" class="color-option" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);"></label>
+                    
+                    <input type="radio" name="cardColor" value="green" id="color-green">
+                    <label for="color-green" class="color-option" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);"></label>
+                    
+                    <input type="radio" name="cardColor" value="orange" id="color-orange">
+                    <label for="color-orange" class="color-option" style="background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);"></label>
+                    
+                    <input type="radio" name="cardColor" value="pink" id="color-pink">
+                    <label for="color-pink" class="color-option" style="background: linear-gradient(135deg, #f687b3 0%, #d53f8c 100%);"></label>
+                    
+                    <input type="radio" name="cardColor" value="teal" id="color-teal">
+                    <label for="color-teal" class="color-option" style="background: linear-gradient(135deg, #4fd1c5 0%, #319795 100%);"></label>
+                </div>
+            </div>
+
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveUPI()">Save</button>
@@ -1309,12 +1436,23 @@
                 grid.style.display = 'grid';
                 emptyState.style.display = 'none';
                 
-                grid.innerHTML = upiProfiles.map((profile, index) => `
-                    <div class="upi-card" onclick="openPaymentModal(${index})">
+                const colorGradients = {
+                    default: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    blue: 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)',
+                    green: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+                    orange: 'linear-gradient(135deg, #f6ad55 0%, #ed8936 100%)',
+                    pink: 'linear-gradient(135deg, #f687b3 0%, #d53f8c 100%)',
+                    teal: 'linear-gradient(135deg, #4fd1c5 0%, #319795 100%)'
+                };
+                
+                grid.innerHTML = upiProfiles.map((profile, index) => {
+                    const gradient = colorGradients[profile.color || 'default'];
+                    return `
+                    <div class="upi-card" onclick="openPaymentModal(${index})" style="background: ${gradient};">
                         <div class="upi-card-header">
                             <div>
                                 <h3>${profile.cardName || profile.name}</h3>
-                                <p style="font-weight: 500; color: #667eea;">${profile.name}</p>
+                                <p style="font-weight: 500; color: rgba(255,255,255,0.9);">${profile.name}</p>
                                 <p>${profile.upiId}</p>
                             </div>
                             <div class="upi-card-actions" onclick="event.stopPropagation()">
@@ -1323,7 +1461,7 @@
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
         }
 
@@ -1344,6 +1482,12 @@
             document.getElementById('modalCardName').value = profile.cardName || profile.name;
             document.getElementById('modalUpiId').value = profile.upiId;
             document.getElementById('modalName').value = profile.name;
+            
+            // Pre-select saved color
+            const savedColor = profile.color || 'default';
+            const colorRadio = document.getElementById(`color-${savedColor}`);
+            if (colorRadio) colorRadio.checked = true;
+            
             document.getElementById('upiModal').classList.add('active');
         }
 
@@ -1355,13 +1499,14 @@
             const cardName = document.getElementById('modalCardName').value.trim();
             const upiId = document.getElementById('modalUpiId').value.trim();
             const name = document.getElementById('modalName').value.trim();
+            const selectedColor = document.querySelector('input[name="cardColor"]:checked').value;
 
             if (!cardName || !upiId || !name) {
                 alert('Please fill in Card Name, UPI ID and Payee Name');
                 return;
             }
 
-            const profile = { cardName, upiId, name };
+            const profile = { cardName, upiId, name, color: selectedColor };
 
             if (editingIndex >= 0) {
                 upiProfiles[editingIndex] = profile;
