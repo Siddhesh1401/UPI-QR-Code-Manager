@@ -2059,36 +2059,23 @@
                 const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code or click link to pay:\n${upiLink}`;
                 
                 if (navigator.share) {
-                    // Try sharing with both file and text
                     try {
-                        if (navigator.canShare && navigator.canShare({ files: [file], text: message })) {
-                            // Share with both file and text
+                        // Check if we can share files
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            // Share image with text - WhatsApp will show text as caption
                             await navigator.share({
                                 files: [file],
-                                title: 'UPI Payment',
-                                text: message
+                                text: message,
+                                title: 'UPI Payment'
                             });
-                        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            // Share file only, then copy text
-                            await navigator.share({
-                                files: [file],
-                                title: 'UPI Payment QR Code'
-                            });
-                            // After sharing image, copy link to clipboard
-                            setTimeout(() => {
-                                if (navigator.clipboard) {
-                                    navigator.clipboard.writeText(message).then(() => {
-                                        alert('✅ QR shared! Payment link copied to clipboard - paste it in your message.');
-                                    }).catch(() => {});
-                                }
-                            }, 500);
                         } else {
-                            // Share text with link, then download image
+                            // Fallback: Share text only, then download image
                             await navigator.share({
                                 title: 'UPI Payment',
                                 text: message
                             });
-                            downloadQR();
+                            // Auto-download QR after sharing text
+                            setTimeout(() => downloadQR(), 500);
                         }
                     } catch (shareError) {
                         if (shareError.name !== 'AbortError') {
