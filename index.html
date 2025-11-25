@@ -1266,6 +1266,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Generate QR Code</button>
+                <button type="button" class="btn" onclick="generateQuickLink()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; margin-top: 12px;">🔗 Generate Quick Link</button>
             </form>
 
             <div id="qrcode-container" style="display: none; visibility: hidden; position: absolute;">
@@ -1309,6 +1310,9 @@
                 </button>
                 <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
                     ⬇️ Download
+                </button>
+                <button class="qr-display-btn" onclick="saveToGallery()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                    💾 Save to Gallery
                 </button>
             </div>
         </div>
@@ -1907,6 +1911,248 @@
                 }
                 console.error('Share error:', error);
                 downloadQR();
+            }
+        }
+
+        // Quick Link Generation
+        function generateQuickLink() {
+            const amount = document.getElementById('paymentAmount').value;
+            
+            if (!amount || amount <= 0) {
+                alert('⚠️ Please enter a valid amount first');
+                return;
+            }
+
+            if (!currentProfile) {
+                alert('⚠️ Profile not found');
+                return;
+            }
+
+            const upiLink = `upi://pay?pa=${encodeURIComponent(currentProfile.upiId)}&pn=${encodeURIComponent(currentProfile.name)}&am=${amount}&cu=INR`;
+            
+            // Create shareable text
+            const shareText = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentProfile.name}*\n💰 Amount: *₹${amount}*\n🆔 UPI ID: ${currentProfile.upiId}\n\n🔗 Click to pay: ${upiLink}`;
+
+            // Try to share or copy
+            if (navigator.share) {
+                navigator.share({
+                    title: 'UPI Payment Link',
+                    text: shareText
+                }).then(() => {
+                    console.log('Link shared successfully');
+                }).catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        copyToClipboard(shareText);
+                    }
+                });
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ Payment link copied to clipboard!\n\nShare it with anyone to receive payment.');
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ Payment link copied to clipboard!');
+            } catch (err) {
+                alert('📋 Please copy manually:\n\n' + text);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // Save to Gallery
+        async function saveToGallery() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+
+            try {
+                const qrDisplayContainer = document.getElementById('qrDisplayQR');
+                let canvas = qrDisplayContainer.querySelector("canvas");
+                let img = qrDisplayContainer.querySelector("img");
+                
+                if (!canvas && !img) {
+                    const qrContainer = document.getElementById('qrcode-container');
+                    canvas = qrContainer.querySelector("canvas");
+                    img = qrContainer.querySelector("img");
+                }
+                
+                if (!canvas && !img) {
+                    alert('⚠️ QR code not found');
+                    return;
+                }
+
+                // Create styled canvas (same as share function)
+                const sourceElement = canvas || img;
+                const styledCanvas = document.createElement('canvas');
+                const ctx = styledCanvas.getContext('2d');
+                
+                const qrSize = 320;
+                const cardWidth = 480;
+                const cardHeight = 680;
+                const borderRadius = 24;
+                
+                styledCanvas.width = cardWidth;
+                styledCanvas.height = cardHeight;
+                
+                function roundRect(x, y, width, height, radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + width - radius, y);
+                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    ctx.lineTo(x + width, y + height - radius);
+                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                    ctx.lineTo(x + radius, y + height);
+                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                }
+                
+                roundRect(0, 0, cardWidth, cardHeight, borderRadius);
+                const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+                bgGradient.addColorStop(0, '#667eea');
+                bgGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = bgGradient;
+                ctx.fill();
+                
+                ctx.globalAlpha = 0.15;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(60, 60, 100, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cardWidth - 50, cardHeight - 50, 120, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                const headerPadding = 24;
+                roundRect(headerPadding, headerPadding, cardWidth - headerPadding * 2, 90, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 4;
+                
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('💳 UPI Payment', headerPadding + 20, headerPadding + 40);
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '16px Inter, sans-serif';
+                ctx.fillText('Scan to Pay', headerPadding + 20, headerPadding + 70);
+                
+                ctx.shadowColor = 'transparent';
+                
+                const qrTop = 140;
+                const qrLeft = (cardWidth - qrSize) / 2;
+                roundRect(qrLeft, qrTop, qrSize, qrSize, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 10;
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                
+                if (canvas) {
+                    ctx.drawImage(canvas, qrLeft + 10, qrTop + 10, qrSize - 20, qrSize - 20);
+                } else {
+                    const tempImg = new Image();
+                    tempImg.src = img.src;
+                    await new Promise(resolve => {
+                        tempImg.onload = () => {
+                            ctx.drawImage(tempImg, qrLeft + 10, qrTop + 10, qrSize - 20, qrSize - 20);
+                            resolve();
+                        };
+                    });
+                }
+                
+                const infoY = qrTop + qrSize + 40;
+                const infoLeft = 50;
+                
+                ctx.textAlign = 'left';
+                ctx.fillStyle = 'white';
+                ctx.font = '18px Inter, sans-serif';
+                ctx.fillText('Pay to:', infoLeft, infoY);
+                
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 35);
+                
+                ctx.font = '16px Inter, sans-serif';
+                ctx.globalAlpha = 0.9;
+                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 65);
+                ctx.globalAlpha = 1;
+                
+                ctx.font = '18px Inter, sans-serif';
+                ctx.fillText('Amount:', infoLeft, infoY + 105);
+                
+                const amountGradient = ctx.createLinearGradient(0, infoY + 120, 0, infoY + 160);
+                amountGradient.addColorStop(0, '#667eea');
+                amountGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = amountGradient;
+                ctx.font = 'bold 36px Inter, sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 142);
+                
+                // Convert to blob
+                const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
+                
+                // Try using File System Access API for better gallery saving
+                if ('showSaveFilePicker' in window) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: `upi-qr-${currentQRInfo.name.replace(/\s+/g, '-')}-${Date.now()}.png`,
+                            types: [{
+                                description: 'PNG Image',
+                                accept: { 'image/png': ['.png'] }
+                            }]
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                        alert('✅ QR code saved to gallery successfully!');
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            throw err;
+                        }
+                    }
+                } else {
+                    // Fallback to download
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `upi-qr-${currentQRInfo.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    alert('✅ QR code downloaded! Check your Downloads folder or Gallery.');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('❌ Could not save to gallery. Try the Download button instead.');
             }
         }
 
