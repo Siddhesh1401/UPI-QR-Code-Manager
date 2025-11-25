@@ -1992,7 +1992,7 @@
             }
             
             const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-            const shareText = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Click to pay: ${upiLink}`;
+            const shareText = `Please find my UPI details\nName - ${currentQRInfo.name}\nUPI Handle - ${currentQRInfo.upiId}\nLink to directly pay me - ${upiLink}`;
             
             if (navigator.share) {
                 try {
@@ -2170,6 +2170,13 @@ Link to directly pay me - ${upiLink}`;
                     try {
                         console.log('Sharing QR with payment details...');
                         
+                        // Show instruction BEFORE sharing
+                        const userConfirm = confirm('📋 IMPORTANT: Sharing Image + Text\n\n✅ I will copy the payment details to your clipboard\n✅ After selecting WhatsApp, PASTE the text in message field\n\nReady to proceed?');
+                        
+                        if (!userConfirm) {
+                            return;
+                        }
+                        
                         // Copy the message to clipboard FIRST
                         if (navigator.clipboard) {
                             await navigator.clipboard.writeText(message);
@@ -2179,10 +2186,10 @@ Link to directly pay me - ${upiLink}`;
                         // Then share the QR image
                         await navigator.share({ files: [file] });
                         
-                        // After share dialog is selected, show instruction
+                        // Reminder after share
                         setTimeout(() => {
-                            alert('✅ QR Code shared!\n\n📋 Payment details copied to clipboard!\n\nNow in WhatsApp:\n1. QR image is attached\n2. Tap in the message field\n3. Tap "Paste" to add payment details\n4. Send! 🚀');
-                        }, 300);
+                            alert('✅ Image shared!\n\n⚠️ DON\'T FORGET:\n📋 Payment details are in clipboard\n👉 Long press in WhatsApp message field\n👉 Tap "Paste"\n👉 Send both together! 🚀');
+                        }, 500);
                         
                     } catch (shareError) {
                         if (shareError.name !== 'AbortError') {
