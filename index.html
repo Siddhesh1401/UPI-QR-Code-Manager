@@ -1984,6 +1984,19 @@
             await shareQR();
         }
         
+        // URL shortening function using TinyURL API
+        async function shortenUrl(longUrl) {
+            try {
+                const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+                if (response.ok) {
+                    return await response.text();
+                }
+            } catch (error) {
+                console.log('URL shortening failed, using original URL');
+            }
+            return longUrl;
+        }
+
         async function shareLinkOnly() {
             closeShareModal();
             if (!currentQRInfo) {
@@ -1992,7 +2005,8 @@
             }
             
             const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-            const shareText = `Please find my UPI details\nName - ${currentQRInfo.name}\nUPI Handle - ${currentQRInfo.upiId}\nLink to directly pay me - ${upiLink}`;
+            const shortUrl = await shortenUrl(upiLink);
+            const shareText = `💵 *UPI Payment Request*\n\n🧑 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Click to pay: ${shortUrl}`;
             
             if (navigator.share) {
                 try {
@@ -2158,13 +2172,11 @@
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
-                // Create the message text (like your screenshot format)
+                // Create the message text with shortened URL
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+                const shortUrl = await shortenUrl(upiLink);
                 
-                const message = `Please find my UPI details
-Name - ${currentQRInfo.name}
-UPI Handle - ${currentQRInfo.upiId}
-Link to directly pay me - ${upiLink}`;
+                const message = `💵 *UPI Payment Request*\n\n🧑 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Click to pay: ${shortUrl}`;
                 
                 if (navigator.share) {
                     try {
