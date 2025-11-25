@@ -72,6 +72,87 @@
             animation: spin 1s linear infinite;
             margin-top: 30px;
         }
+        
+        /* PIN Lock Styles */
+        .pin-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .pin-dot.filled {
+            background: white;
+            border-color: white;
+            transform: scale(1.2);
+        }
+        
+        .pin-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .pin-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: 0.4s;
+            border-radius: 28px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -1377,6 +1458,47 @@
         <div class="splash-loader"></div>
     </div>
 
+    <!-- PIN Lock Screen -->
+    <div id="pinLockScreen" style="display: none;">
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="text-align: center; color: white; margin-bottom: 40px;">
+                <div style="font-size: 4rem; margin-bottom: 16px;">🔒</div>
+                <h2 style="font-size: 1.8rem; margin: 0 0 8px 0;">UPI Manager</h2>
+                <p style="opacity: 0.9; font-size: 1rem;">Enter your PIN to unlock</p>
+            </div>
+            
+            <div id="pinDisplay" style="display: flex; gap: 16px; margin-bottom: 40px;">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+            
+            <div id="pinError" style="color: #fee; background: rgba(239, 68, 68, 0.3); padding: 12px 24px; border-radius: 8px; margin-bottom: 24px; display: none;">
+                ❌ Incorrect PIN. Try again.
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 300px; width: 100%;">
+                <button class="pin-btn" onclick="enterPin('1')">1</button>
+                <button class="pin-btn" onclick="enterPin('2')">2</button>
+                <button class="pin-btn" onclick="enterPin('3')">3</button>
+                <button class="pin-btn" onclick="enterPin('4')">4</button>
+                <button class="pin-btn" onclick="enterPin('5')">5</button>
+                <button class="pin-btn" onclick="enterPin('6')">6</button>
+                <button class="pin-btn" onclick="enterPin('7')">7</button>
+                <button class="pin-btn" onclick="enterPin('8')">8</button>
+                <button class="pin-btn" onclick="enterPin('9')">9</button>
+                <button class="pin-btn" onclick="clearPin()" style="background: rgba(239, 68, 68, 0.2);">✕</button>
+                <button class="pin-btn" onclick="enterPin('0')">0</button>
+                <button class="pin-btn" onclick="deletePin()" style="background: rgba(251, 191, 36, 0.2);">⌫</button>
+            </div>
+            
+            <button onclick="tryBiometric()" style="margin-top: 32px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 32px; border-radius: 12px; font-size: 1rem; cursor: pointer;">
+                🔐 Use Biometric
+            </button>
+        </div>
+    </div>
+
     <!-- Header -->
     <div class="header">
         <h1>💳 UPI Manager</h1>
@@ -1594,6 +1716,28 @@
                 </div>
             </div>
             
+            <div class="form-group" style="margin-top: 24px;">
+                <label>🔒 App Security</label>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Protect your app with PIN lock</p>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(99, 102, 241, 0.1); padding: 16px; border-radius: 12px;">
+                    <div>
+                        <p style="font-weight: 600; margin: 0 0 4px 0;">Enable PIN Lock</p>
+                        <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">Require PIN to open app</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="pinLockToggle" onchange="togglePinLock()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div id="pinSetup" style="display: none; margin-top: 16px;">
+                    <label for="newPin" style="font-size: 0.85rem;">Set 4-Digit PIN</label>
+                    <input type="password" id="newPin" maxlength="4" pattern="[0-9]{4}" placeholder="Enter 4-digit PIN" style="margin-top: 4px; letter-spacing: 8px; font-size: 1.2rem; text-align: center;" inputmode="numeric">
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">⚠️ Remember this PIN - you'll need it to unlock the app</p>
+                </div>
+            </div>
+            
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
@@ -1777,16 +1921,117 @@
             });
         }
 
+        // PIN Lock System
+        let enteredPin = '';
+        
+        function checkPinLock() {
+            const pinEnabled = localStorage.getItem('pinLockEnabled') === 'true';
+            const savedPin = localStorage.getItem('appPin');
+            
+            if (pinEnabled && savedPin) {
+                document.getElementById('pinLockScreen').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                return true;
+            }
+            return false;
+        }
+        
+        function enterPin(digit) {
+            if (enteredPin.length < 4) {
+                enteredPin += digit;
+                updatePinDisplay();
+                
+                if (enteredPin.length === 4) {
+                    setTimeout(verifyPin, 300);
+                }
+            }
+        }
+        
+        function deletePin() {
+            if (enteredPin.length > 0) {
+                enteredPin = enteredPin.slice(0, -1);
+                updatePinDisplay();
+            }
+        }
+        
+        function clearPin() {
+            enteredPin = '';
+            updatePinDisplay();
+            document.getElementById('pinError').style.display = 'none';
+        }
+        
+        function updatePinDisplay() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < enteredPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+        
+        function verifyPin() {
+            const savedPin = localStorage.getItem('appPin');
+            if (enteredPin === savedPin) {
+                document.getElementById('pinLockScreen').style.display = 'none';
+                document.body.style.overflow = '';
+                enteredPin = '';
+            } else {
+                document.getElementById('pinError').style.display = 'block';
+                enteredPin = '';
+                updatePinDisplay();
+                setTimeout(() => {
+                    document.getElementById('pinError').style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        async function tryBiometric() {
+            if (window.PublicKeyCredential) {
+                try {
+                    alert('🔐 Biometric authentication available! Feature coming soon.');
+                } catch (error) {
+                    alert('❌ Biometric authentication not available');
+                }
+            } else {
+                alert('❌ Biometric authentication not supported on this device');
+            }
+        }
+        
+        function togglePinLock() {
+            const toggle = document.getElementById('pinLockToggle');
+            const pinSetup = document.getElementById('pinSetup');
+            
+            if (toggle.checked) {
+                pinSetup.style.display = 'block';
+            } else {
+                pinSetup.style.display = 'none';
+                localStorage.removeItem('pinLockEnabled');
+                localStorage.removeItem('appPin');
+            }
+        }
+
         // Splash Screen Handler
         window.addEventListener('load', function() {
             // Load saved theme
             loadTheme();
             
-            setTimeout(() => {
+            // Check PIN lock first
+            const isLocked = checkPinLock();
+            
+            if (!isLocked) {
+                setTimeout(() => {
+                    const splash = document.getElementById('splash-screen');
+                    splash.classList.add('hidden');
+                    setTimeout(() => splash.remove(), 500);
+                }, 1000);
+            } else {
+                // Hide splash immediately if PIN is required
                 const splash = document.getElementById('splash-screen');
                 splash.classList.add('hidden');
                 setTimeout(() => splash.remove(), 500);
-            }, 1000);
+            }
         });
 
         // Prevent pull-to-refresh on mobile
@@ -2064,6 +2309,19 @@
             const selectedTemplate = document.querySelector('input[name="cardTemplate"]:checked').value;
             localStorage.setItem('qrCardTemplate', selectedTemplate);
             
+            // Save PIN lock settings
+            const pinToggle = document.getElementById('pinLockToggle');
+            if (pinToggle.checked) {
+                const newPin = document.getElementById('newPin').value;
+                if (newPin.length === 4 && /^\d{4}$/.test(newPin)) {
+                    localStorage.setItem('pinLockEnabled', 'true');
+                    localStorage.setItem('appPin', newPin);
+                } else {
+                    alert('⚠️ Please enter a valid 4-digit PIN');
+                    return;
+                }
+            }
+            
             closeSettingsModal();
             alert('✅ Settings saved successfully!');
         }
@@ -2081,6 +2339,16 @@
             const savedTemplate = localStorage.getItem('qrCardTemplate') || 'modern';
             const templateRadio = document.querySelector(`input[name="cardTemplate"][value="${savedTemplate}"]`);
             if (templateRadio) templateRadio.checked = true;
+            
+            // Load PIN lock status
+            const pinEnabled = localStorage.getItem('pinLockEnabled') === 'true';
+            const pinToggle = document.getElementById('pinLockToggle');
+            if (pinToggle) {
+                pinToggle.checked = pinEnabled;
+                if (pinEnabled) {
+                    document.getElementById('pinSetup').style.display = 'block';
+                }
+            }
         }
         
         // Share Modal Functions
