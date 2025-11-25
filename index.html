@@ -1540,7 +1540,7 @@
                 <button class="pin-btn" onclick="deletePin()" style="background: rgba(251, 191, 36, 0.2);">⌫</button>
             </div>
             
-            <button onclick="tryBiometric()" style="margin-top: 32px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 32px; border-radius: 12px; font-size: 1rem; cursor: pointer;">
+            <button id="biometricBtn" onclick="tryBiometric()" style="margin-top: 32px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 32px; border-radius: 12px; font-size: 1rem; cursor: pointer; display: none;">
                 🔐 Use Biometric
             </button>
         </div>
@@ -1782,6 +1782,18 @@
                     <label for="newPin" style="font-size: 0.85rem;">Set 4-Digit PIN</label>
                     <input type="password" id="newPin" maxlength="4" pattern="[0-9]{4}" placeholder="Enter 4-digit PIN" style="margin-top: 4px; letter-spacing: 8px; font-size: 1.2rem; text-align: center;" inputmode="numeric">
                     <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">⚠️ Remember this PIN - you'll need it to unlock the app</p>
+                    
+                    <div id="biometricSetup" style="margin-top: 16px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 1.2rem;">🔐</span>
+                            <span style="font-weight: 600; font-size: 0.9rem;">Biometric Unlock</span>
+                            <span id="biometricStatus" style="margin-left: auto; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; background: rgba(148, 163, 184, 0.2); color: #64748b;">Not Setup</span>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #64748b; margin: 0 0 8px 0;">Use fingerprint or Face ID to unlock</p>
+                        <button type="button" onclick="setupBiometricFromSettings()" id="biometricSetupBtn" style="width: 100%; padding: 8px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">
+                            Setup Biometric
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1978,6 +1990,14 @@
             if (pinEnabled && savedPin) {
                 document.getElementById('pinLockScreen').style.display = 'block';
                 document.body.style.overflow = 'hidden';
+                
+                // Show biometric button if available and set up
+                const hasBiometric = localStorage.getItem('biometricCredentialId');
+                const biometricBtn = document.getElementById('biometricBtn');
+                if (biometricBtn && hasBiometric && window.PublicKeyCredential) {
+                    biometricBtn.style.display = 'block';
+                }
+                
                 return true;
             }
             return false;
@@ -2035,14 +2055,142 @@
         }
         
         async function tryBiometric() {
-            if (window.PublicKeyCredential) {
-                try {
-                    alert('🔐 Biometric authentication available! Feature coming soon.');
-                } catch (error) {
-                    alert('❌ Biometric authentication not available');
-                }
-            } else {
+            if (!window.PublicKeyCredential) {
                 alert('❌ Biometric authentication not supported on this device');
+                return;
+            }
+
+            try {
+                // Check if biometric credentials exist
+                const storedCredential = localStorage.getItem('biometricCredentialId');
+                
+                if (!storedCredential) {
+                    // First time - register biometric
+                    await registerBiometric();
+                    return;
+                }
+
+                // Authenticate with biometric
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const publicKeyCredentialRequestOptions = {
+                    challenge: challenge,
+                    allowCredentials: [{
+                        id: Uint8Array.from(atob(storedCredential), c => c.charCodeAt(0)),
+                        type: 'public-key',
+                        transports: ['internal']
+                    }],
+                    timeout: 60000,
+                    userVerification: 'required'
+                };
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                });
+
+                if (assertion) {
+                    // Biometric success - unlock app
+                    document.getElementById('pinLockScreen').style.display = 'none';
+                    document.body.style.overflow = '';
+                    enteredPin = '';
+                }
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    alert('❌ Biometric authentication cancelled');
+                } else {
+                    console.error('Biometric error:', error);
+                    alert('❌ Biometric authentication failed. Use PIN instead.');
+                }
+            }
+        }
+
+        async function registerBiometric() {
+            try {
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: challenge,
+                    rp: {
+                        name: "UPI Manager",
+                        id: window.location.hostname
+                    },
+                    user: {
+                        id: new Uint8Array(16),
+                        name: "user@upimanager",
+                        displayName: "UPI Manager User"
+                    },
+                    pubKeyCredParams: [
+                        { alg: -7, type: "public-key" },  // ES256
+                        { alg: -257, type: "public-key" } // RS256
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform",
+                        userVerification: "required",
+                        requireResidentKey: false
+                    },
+                    timeout: 60000,
+                    attestation: "none"
+                };
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                if (credential) {
+                    // Store credential ID
+                    const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                    localStorage.setItem('biometricCredentialId', credentialId);
+                    
+                    alert('✅ Biometric authentication registered! You can now use fingerprint/Face ID.');
+                    
+                    // Unlock app immediately
+                    document.getElementById('pinLockScreen').style.display = 'none';
+                    document.body.style.overflow = '';
+                    enteredPin = '';
+                }
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    alert('❌ Biometric registration cancelled');
+                } else {
+                    console.error('Biometric registration error:', error);
+                    alert('❌ Could not register biometric. Use PIN instead.');
+                }
+            }
+        }
+        
+        async function setupBiometricFromSettings() {
+            if (!window.PublicKeyCredential) {
+                alert('❌ Biometric authentication not supported on this device');
+                return;
+            }
+
+            try {
+                await registerBiometric();
+                updateBiometricStatus();
+            } catch (error) {
+                console.error('Biometric setup error:', error);
+            }
+        }
+
+        function updateBiometricStatus() {
+            const statusEl = document.getElementById('biometricStatus');
+            const btnEl = document.getElementById('biometricSetupBtn');
+            const hasBiometric = localStorage.getItem('biometricCredentialId');
+            
+            if (statusEl && btnEl) {
+                if (hasBiometric) {
+                    statusEl.textContent = '✓ Active';
+                    statusEl.style.background = 'rgba(16, 185, 129, 0.2)';
+                    statusEl.style.color = '#10b981';
+                    btnEl.textContent = 'Re-register Biometric';
+                } else {
+                    statusEl.textContent = 'Not Setup';
+                    statusEl.style.background = 'rgba(148, 163, 184, 0.2)';
+                    statusEl.style.color = '#64748b';
+                    btnEl.textContent = 'Setup Biometric';
+                }
             }
         }
         
@@ -2052,10 +2200,12 @@
             
             if (toggle.checked) {
                 pinSetup.style.display = 'block';
+                updateBiometricStatus();
             } else {
                 pinSetup.style.display = 'none';
                 localStorage.removeItem('pinLockEnabled');
                 localStorage.removeItem('appPin');
+                localStorage.removeItem('biometricCredentialId');
             }
         }
 
@@ -2392,6 +2542,7 @@
                 pinToggle.checked = pinEnabled;
                 if (pinEnabled) {
                     document.getElementById('pinSetup').style.display = 'block';
+                    updateBiometricStatus();
                 }
             }
         }
