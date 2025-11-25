@@ -1335,6 +1335,9 @@
             <button class="add-btn" id="themeToggle" onclick="toggleTheme()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 12px 20px;">
                 🌙
             </button>
+            <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
+                🔄
+            </button>
             <button class="add-btn" onclick="openSettingsModal()" style="background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.3); color: #a78bfa; padding: 12px 20px;">
                 ⚙️
             </button>
@@ -2055,19 +2058,45 @@
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
                 const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code or click link to pay:\n${upiLink}`;
                 
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'UPI Payment',
-                        text: message
-                    });
-                } else if (navigator.share) {
-                    await navigator.share({
-                        title: 'UPI Payment',
-                        text: message
-                    });
-                    downloadQR();
+                if (navigator.share) {
+                    // Try sharing with both file and text
+                    try {
+                        if (navigator.canShare && navigator.canShare({ files: [file], text: message })) {
+                            // Share with both file and text
+                            await navigator.share({
+                                files: [file],
+                                title: 'UPI Payment',
+                                text: message
+                            });
+                        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            // Share file only, then copy text
+                            await navigator.share({
+                                files: [file],
+                                title: 'UPI Payment QR Code'
+                            });
+                            // After sharing image, copy link to clipboard
+                            setTimeout(() => {
+                                if (navigator.clipboard) {
+                                    navigator.clipboard.writeText(message).then(() => {
+                                        alert('✅ QR shared! Payment link copied to clipboard - paste it in your message.');
+                                    }).catch(() => {});
+                                }
+                            }, 500);
+                        } else {
+                            // Share text with link, then download image
+                            await navigator.share({
+                                title: 'UPI Payment',
+                                text: message
+                            });
+                            downloadQR();
+                        }
+                    } catch (shareError) {
+                        if (shareError.name !== 'AbortError') {
+                            throw shareError;
+                        }
+                    }
                 } else {
+                    // No share API - copy and download
                     copyToClipboard(message);
                     downloadQR();
                 }
