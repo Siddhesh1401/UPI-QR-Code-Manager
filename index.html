@@ -862,6 +862,14 @@
             justify-content: center;
             padding: 20px;
         }
+        
+        #shareModal {
+            z-index: 10001 !important;
+        }
+        
+        #settingsModal {
+            z-index: 10001 !important;
+        }
 
         #qrDisplayModal.active {
             display: flex;
@@ -1903,7 +1911,7 @@
             }
             
             try {
-                // Get QR image
+                // Get QR image from display
                 const qrDisplayContainer = document.getElementById('qrDisplayQR');
                 let canvas = qrDisplayContainer.querySelector("canvas");
                 let img = qrDisplayContainer.querySelector("img");
@@ -1914,8 +1922,132 @@
                     img = qrContainer.querySelector("img");
                 }
                 
-                // Create styled QR blob
-                const blob = await createStyledQRBlob(canvas || img);
+                if (!canvas && !img) {
+                    alert('⚠️ QR code not found. Please generate QR first.');
+                    return;
+                }
+                
+                // Use the same styled canvas creation from shareQR function
+                const sourceElement = canvas || img;
+                const styledCanvas = document.createElement('canvas');
+                const ctx = styledCanvas.getContext('2d');
+                
+                const qrSize = 320;
+                const cardWidth = 480;
+                const cardHeight = 680;
+                const borderRadius = 24;
+                
+                styledCanvas.width = cardWidth;
+                styledCanvas.height = cardHeight;
+                
+                function roundRect(x, y, width, height, radius) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + width - radius, y);
+                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    ctx.lineTo(x + width, y + height - radius);
+                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                    ctx.lineTo(x + radius, y + height);
+                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                }
+                
+                roundRect(0, 0, cardWidth, cardHeight, borderRadius);
+                const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+                bgGradient.addColorStop(0, '#667eea');
+                bgGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = bgGradient;
+                ctx.fill();
+                
+                ctx.globalAlpha = 0.15;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(60, 60, 100, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cardWidth - 50, cardHeight - 50, 120, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                const headerPadding = 24;
+                roundRect(headerPadding, headerPadding, cardWidth - headerPadding * 2, 90, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 4;
+                
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 26px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerPadding + 42);
+                ctx.font = '15px Inter, sans-serif';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerPadding + 68);
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+                
+                const qrY = 138;
+                const qrX = (cardWidth - qrSize - 40) / 2;
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 10;
+                
+                roundRect(qrX, qrY, qrSize + 40, qrSize + 40, 16);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                
+                if (canvas) {
+                    ctx.drawImage(canvas, qrX + 20, qrY + 20, qrSize, qrSize);
+                } else if (img) {
+                    await new Promise((resolve) => {
+                        const tempImg = new Image();
+                        tempImg.onload = () => {
+                            ctx.drawImage(tempImg, qrX + 20, qrY + 20, qrSize, qrSize);
+                            resolve();
+                        };
+                        tempImg.src = img.src;
+                    });
+                }
+                
+                const infoY = qrY + qrSize + 70;
+                const infoLeft = 50;
+                
+                ctx.textAlign = 'left';
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Inter, sans-serif';
+                ctx.fillText('PAY TO', infoLeft, infoY);
+                
+                ctx.font = 'bold 22px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 30);
+                
+                ctx.font = '14px Inter, sans-serif';
+                ctx.globalAlpha = 0.9;
+                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 55);
+                ctx.globalAlpha = 1;
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('AMOUNT', infoLeft, infoY + 90);
+                
+                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 95, infoLeft + 200, infoY + 120);
+                amountGradient.addColorStop(0, '#667eea');
+                amountGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = amountGradient;
+                ctx.font = 'bold 36px Inter, sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 122);
+                
+                // Convert to blob
+                const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
@@ -1941,9 +2073,10 @@
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
-                    console.error('Share error:', error);
-                    alert('❌ Could not share. QR will be downloaded.');
-                    downloadQR();
+                    console.error('Share both error:', error);
+                    alert('❌ Could not share. Trying fallback...');
+                    // Fallback to link only
+                    await shareLinkOnly();
                 }
             }
         }
