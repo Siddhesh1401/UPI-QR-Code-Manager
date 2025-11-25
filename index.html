@@ -1485,6 +1485,9 @@
                         <button type="button" class="preset-btn" onclick="setAmount(1000)">₹1000</button>
                     </div>
                     <input type="number" id="paymentAmount" placeholder="100" step="0.01" min="0.01" required inputmode="decimal">
+                    <button type="button" onclick="openSplitCalculator()" style="margin-top: 8px; padding: 8px 12px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; width: 100%;">
+                        🧮 Split Bill Calculator
+                    </button>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Generate QR Code</button>
@@ -1594,6 +1597,42 @@
             <div class="modal-buttons">
                 <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split Payment Calculator Modal -->
+    <div id="splitCalculatorModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>🧮 Split Bill Calculator</h2>
+                <button class="close-btn" onclick="closeSplitCalculator()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="totalBillAmount">Total Bill Amount (₹)</label>
+                <input type="number" id="totalBillAmount" placeholder="1000" step="0.01" min="0.01" oninput="calculateSplit()">
+            </div>
+            
+            <div class="form-group">
+                <label for="numberOfPeople">Number of People</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" onclick="adjustPeople(-1)" style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.2rem; cursor: pointer;">−</button>
+                    <input type="number" id="numberOfPeople" value="2" min="2" max="50" style="text-align: center; font-size: 1.5rem; font-weight: bold;" oninput="calculateSplit()" readonly>
+                    <button type="button" onclick="adjustPeople(1)" style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.2rem; cursor: pointer;">+</button>
+                </div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                <div style="text-align: center;">
+                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">Each Person Pays</p>
+                    <p id="splitResult" style="font-size: 2.5rem; font-weight: bold; color: #667eea; margin: 0;">₹0</p>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeSplitCalculator()">Cancel</button>
+                <button class="btn btn-primary" onclick="useSplitAmount()">Use This Amount</button>
             </div>
         </div>
     </div>
@@ -2055,6 +2094,40 @@
         
         function closeShareModal() {
             document.getElementById('shareModal').classList.remove('active');
+        }
+        
+        // Split Payment Calculator Functions
+        function openSplitCalculator() {
+            document.getElementById('splitCalculatorModal').classList.add('active');
+            calculateSplit();
+        }
+        
+        function closeSplitCalculator() {
+            document.getElementById('splitCalculatorModal').classList.remove('active');
+        }
+        
+        function adjustPeople(delta) {
+            const input = document.getElementById('numberOfPeople');
+            let value = parseInt(input.value) + delta;
+            if (value < 2) value = 2;
+            if (value > 50) value = 50;
+            input.value = value;
+            calculateSplit();
+        }
+        
+        function calculateSplit() {
+            const totalAmount = parseFloat(document.getElementById('totalBillAmount').value) || 0;
+            const numberOfPeople = parseInt(document.getElementById('numberOfPeople').value) || 2;
+            
+            const splitAmount = totalAmount / numberOfPeople;
+            document.getElementById('splitResult').textContent = `₹${splitAmount.toFixed(2)}`;
+        }
+        
+        function useSplitAmount() {
+            const splitAmount = parseFloat(document.getElementById('splitResult').textContent.replace('₹', ''));
+            document.getElementById('paymentAmount').value = splitAmount.toFixed(2);
+            closeSplitCalculator();
+            alert(`✅ Amount set to ₹${splitAmount.toFixed(2)} per person`);
         }
         
         // QR Card Template Renderer
