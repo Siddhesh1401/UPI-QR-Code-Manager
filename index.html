@@ -160,6 +160,23 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        @keyframes qr-glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(118, 75, 162, 0.6);
+            }
+        }
+        @keyframes qr-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .qr-animated canvas {
+            animation: qr-glow 2s ease-in-out infinite, qr-float 3s ease-in-out infinite;
+            border-radius: 12px;
+        }
     </style>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1556,6 +1573,9 @@
             <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
                 🔄
             </button>
+            <button class="add-btn" onclick="generateBulkQR()" style="background: rgba(244, 114, 182, 0.1); border: 2px solid rgba(244, 114, 182, 0.3); color: #f472b6; padding: 12px 20px;">
+                👥
+            </button>
             <button class="add-btn" onclick="openSettingsModal()" style="background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.3); color: #a78bfa; padding: 12px 20px;">
                 ⚙️
             </button>
@@ -1764,6 +1784,34 @@
             </div>
             
             <div class="form-group" style="margin-top: 24px;">
+                <label>🎨 QR Customization</label>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Personalize your QR codes</p>
+                
+                <div style="background: rgba(139, 92, 246, 0.1); padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">🖼️ QR Center Logo</label>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 12px;">Add your logo/image to the center of QR codes</p>
+                    <input type="file" id="qrLogoUpload" accept="image/*" onchange="handleLogoUpload(event)" style="width: 100%; padding: 10px; border: 2px dashed rgba(139, 92, 246, 0.3); border-radius: 8px; cursor: pointer;">
+                    <div id="logoPreview" style="margin-top: 12px; display: none;">
+                        <img id="logoPreviewImg" style="max-width: 80px; max-height: 80px; border-radius: 8px; border: 2px solid rgba(139, 92, 246, 0.3);">
+                        <button type="button" onclick="removeLogo()" style="margin-left: 8px; padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">Remove</button>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(139, 92, 246, 0.1); padding: 16px; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <p style="font-weight: 600; margin: 0 0 4px 0;">🌈 Animated QR Effects</p>
+                            <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">Add subtle animations to QR codes</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="animatedQRToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 24px;">
                 <label>🔒 App Security</label>
                 <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Protect your app with PIN lock</p>
                 
@@ -1878,6 +1926,15 @@
                 </button>
                 <button class="qr-display-btn" onclick="saveToGallery()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
                     💾 Gallery
+                </button>
+                <button class="qr-display-btn" onclick="shareViaEmail()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    📧 Email
+                </button>
+                <button class="qr-display-btn" onclick="shareViaSMS()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    💬 SMS
+                </button>
+                <button class="qr-display-btn" onclick="generatePaymentLink()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    🔗 Link
                 </button>
             </div>
         </div>
@@ -2194,6 +2251,58 @@
             }
         }
         
+        // QR Logo Functions
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('❌ Please upload an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoData = e.target.result;
+                localStorage.setItem('qrLogo', logoData);
+                
+                document.getElementById('logoPreviewImg').src = logoData;
+                document.getElementById('logoPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeLogo() {
+            localStorage.removeItem('qrLogo');
+            document.getElementById('logoPreview').style.display = 'none';
+            document.getElementById('qrLogoUpload').value = '';
+        }
+        
+        function addLogoToQR(qrElement) {
+            const logoData = localStorage.getItem('qrLogo');
+            if (!logoData) return;
+            
+            const canvas = qrElement.querySelector('canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                const logoSize = canvas.width * 0.2; // Logo is 20% of QR size
+                const x = (canvas.width - logoSize) / 2;
+                const y = (canvas.height - logoSize) / 2;
+                
+                // Draw white background for logo
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
+                
+                // Draw logo
+                ctx.drawImage(img, x, y, logoSize, logoSize);
+            };
+            img.src = logoData;
+        }
+        
         function togglePinLock() {
             const toggle = document.getElementById('pinLockToggle');
             const pinSetup = document.getElementById('pinSetup');
@@ -2506,6 +2615,10 @@
             const selectedTemplate = document.querySelector('input[name="cardTemplate"]:checked').value;
             localStorage.setItem('qrCardTemplate', selectedTemplate);
             
+            // Save animated QR setting
+            const animatedToggle = document.getElementById('animatedQRToggle');
+            localStorage.setItem('animatedQR', animatedToggle.checked);
+            
             // Save PIN lock settings
             const pinToggle = document.getElementById('pinLockToggle');
             if (pinToggle.checked) {
@@ -2534,6 +2647,17 @@
             const savedTemplate = localStorage.getItem('qrCardTemplate') || 'modern';
             const templateRadio = document.querySelector(`input[name="cardTemplate"][value="${savedTemplate}"]`);
             if (templateRadio) templateRadio.checked = true;
+            
+            // Load logo preview
+            const logoData = localStorage.getItem('qrLogo');
+            if (logoData) {
+                document.getElementById('logoPreviewImg').src = logoData;
+                document.getElementById('logoPreview').style.display = 'block';
+            }
+            
+            // Load animated QR setting
+            const animatedQR = localStorage.getItem('animatedQR') === 'true';
+            document.getElementById('animatedQRToggle').checked = animatedQR;
             
             // Load PIN lock status
             const pinEnabled = localStorage.getItem('pinLockEnabled') === 'true';
@@ -3223,6 +3347,9 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
+            // Add logo to hidden QR
+            setTimeout(() => addLogoToQR(container), 50);
+
             // Show in popup modal
             setTimeout(() => {
                 const displayQR = document.getElementById('qrDisplayQR');
@@ -3237,13 +3364,22 @@
                     correctLevel: QRCode.CorrectLevel.H
                 });
 
+                // Add logo to display QR
+                setTimeout(() => addLogoToQR(displayQR), 50);
+                
+                // Add animation if enabled
+                const animated = localStorage.getItem('animatedQR') === 'true';
+                if (animated) {
+                    displayQR.classList.add('qr-animated');
+                }
+
                 document.getElementById('qrDisplayName').textContent = currentQRInfo.name;
                 document.getElementById('qrDisplayUPI').textContent = currentQRInfo.upiId;
                 document.getElementById('qrDisplayAmount').textContent = `₹${currentQRInfo.amount}`;
                 
                 closePaymentModal();
                 document.getElementById('qrDisplayModal').classList.add('active');
-            }, 100);
+            }, 150);
         }
 
         function closeQRDisplay() {
@@ -3731,6 +3867,162 @@
             } catch (error) {
                 console.error('Save error:', error);
                 alert('❌ Could not save to gallery. Try the Download button instead.');
+            }
+        }
+
+        // Email Share
+        function shareViaEmail() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+
+            const subject = encodeURIComponent(`Payment Request - ${currentQRInfo.name}`);
+            const body = encodeURIComponent(
+                `Hi,\n\nPlease pay ₹${currentQRInfo.amount} to:\n\n` +
+                `Name: ${currentQRInfo.name}\n` +
+                `UPI ID: ${currentQRInfo.upiId}\n` +
+                `Amount: ₹${currentQRInfo.amount}\n\n` +
+                `You can scan the QR code (attached separately) or use the UPI ID to make the payment.\n\n` +
+                `Thank you!`
+            );
+
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+
+        // SMS Share
+        function shareViaSMS() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+
+            const message = encodeURIComponent(
+                `Pay ₹${currentQRInfo.amount} to ${currentQRInfo.name}\n` +
+                `UPI: ${currentQRInfo.upiId}\n` +
+                `Amount: ₹${currentQRInfo.amount}`
+            );
+
+            // Try SMS protocol (works on mobile)
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                window.location.href = `sms:?body=${message}`;
+            } else {
+                // Desktop fallback - copy to clipboard
+                navigator.clipboard.writeText(decodeURIComponent(message)).then(() => {
+                    alert('📋 Payment details copied to clipboard! Paste in your messaging app.');
+                }).catch(() => {
+                    alert('⚠️ SMS sharing is only available on mobile devices');
+                });
+            }
+        }
+
+        // Generate Payment Link
+        async function generatePaymentLink() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+
+            const upiString = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+            
+            try {
+                // Try to shorten the URL
+                const shortUrl = await shortenUrl(upiString);
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(shortUrl);
+                
+                // Show nice alert with the link
+                const linkDiv = document.createElement('div');
+                linkDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 100000; max-width: 90%; word-break: break-all;';
+                linkDiv.innerHTML = `
+                    <h3 style="margin: 0 0 12px 0; color: #1e293b;">🔗 Payment Link Generated</h3>
+                    <p style="margin: 0 0 16px 0; color: #64748b; font-size: 0.9rem;">Link copied to clipboard!</p>
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-family: monospace; font-size: 0.85rem; color: #475569;">
+                        ${shortUrl}
+                    </div>
+                    <button onclick="this.parentElement.remove()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
+                        Got it!
+                    </button>
+                `;
+                document.body.appendChild(linkDiv);
+                setTimeout(() => linkDiv.remove(), 10000);
+                
+            } catch (error) {
+                console.error('Link generation error:', error);
+                alert('❌ Could not generate payment link');
+            }
+        }
+
+        // Bulk QR Generation
+        async function generateBulkQR() {
+            if (upiProfiles.length === 0) {
+                alert('⚠️ No UPI profiles found. Add some profiles first.');
+                return;
+            }
+
+            if (!confirm(`Generate QR codes for all ${upiProfiles.length} profiles?`)) {
+                return;
+            }
+
+            const amount = prompt('Enter amount for all QR codes (₹):', '100');
+            if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                alert('⚠️ Invalid amount');
+                return;
+            }
+
+            const zip = [];
+            let successCount = 0;
+
+            for (let i = 0; i < upiProfiles.length; i++) {
+                try {
+                    const profile = upiProfiles[i];
+                    const upiString = `upi://pay?pa=${encodeURIComponent(profile.upiId)}&pn=${encodeURIComponent(profile.name)}&am=${amount}&cu=INR`;
+                    
+                    // Create QR code canvas
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.display = 'none';
+                    document.body.appendChild(tempDiv);
+                    
+                    const qr = new QRCode(tempDiv, {
+                        text: upiString,
+                        width: 512,
+                        height: 512,
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const canvas = tempDiv.querySelector('canvas');
+                    if (canvas) {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        zip.push({ name: `${profile.name.replace(/\s+/g, '-')}-${profile.upiId}.png`, blob });
+                        successCount++;
+                    }
+                    
+                    document.body.removeChild(tempDiv);
+                } catch (error) {
+                    console.error(`Error generating QR for ${upiProfiles[i].name}:`, error);
+                }
+            }
+
+            if (successCount > 0) {
+                alert(`✅ Generated ${successCount} QR codes!\n\nDownloading individually...`);
+                
+                // Download each QR
+                for (const item of zip) {
+                    const url = URL.createObjectURL(item.blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = item.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            } else {
+                alert('❌ Could not generate any QR codes');
             }
         }
 
