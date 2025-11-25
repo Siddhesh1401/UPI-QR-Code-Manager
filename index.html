@@ -1561,7 +1561,7 @@
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('./sw.js')
                     .then((registration) => {
                         console.log('Service Worker registered successfully:', registration.scope);
                     })
@@ -2076,23 +2076,23 @@ UPI ID: ${currentQRInfo.upiId}
                             text: message
                         };
                         
-                        if (navigator.canShare && navigator.canShare(shareData)) {
-                            console.log('Can share files + text together');
-                            await navigator.share(shareData);
-                        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            console.log('Can only share files, sharing image then copying text');
-                            // Share image first
+                        // WhatsApp ignores text when sharing files, so we need to copy text to clipboard
+                        // and let user paste it manually after sharing the image
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            console.log('Sharing image, text will be copied to clipboard');
+                            
+                            // First, copy text to clipboard
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(message);
+                            }
+                            
+                            // Then share the image
                             await navigator.share({ files: [file] });
-                            // Copy text to clipboard for user to paste
+                            
+                            // Show instruction after share dialog closes
                             setTimeout(() => {
-                                if (navigator.clipboard) {
-                                    navigator.clipboard.writeText(message).then(() => {
-                                        alert('✅ QR shared! Payment details copied - now paste in WhatsApp');
-                                    });
-                                } else {
-                                    alert('ℹ️ QR shared! Manually copy this:\n\n' + message);
-                                }
-                            }, 1000);
+                                alert('✅ QR shared!\n\n💡 Payment details are copied to clipboard.\n\nNow in WhatsApp:\n1. The QR image is attached\n2. Long press in the text field\n3. Tap "Paste" to add payment link');
+                            }, 500);
                         } else {
                             console.log('Cannot share files, sharing text only');
                             await navigator.share({ text: message });
