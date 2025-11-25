@@ -620,6 +620,34 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
+        /* Template Selector Styles */
+        .template-option {
+            cursor: pointer;
+            display: block;
+        }
+
+        .template-option input[type="radio"] {
+            display: none;
+        }
+
+        .template-preview {
+            transition: all 0.3s ease;
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
+        .template-option:hover .template-preview {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        .template-option input[type="radio"]:checked ~ .template-preview {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+        }
+
         /* Enhanced Animations */
         @keyframes slideUp {
             from {
@@ -1505,6 +1533,41 @@
             </div>
             
             <div class="form-group">
+                <label>🎨 QR Card Template</label>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Choose your QR card design style</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <label class="template-option">
+                        <input type="radio" name="cardTemplate" value="modern" checked>
+                        <div class="template-preview">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem;">Modern</div>
+                        </div>
+                    </label>
+                    
+                    <label class="template-option">
+                        <input type="radio" name="cardTemplate" value="minimal">
+                        <div class="template-preview">
+                            <div style="background: white; border: 2px solid #e2e8f0; height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #1e293b; font-weight: 600; font-size: 0.75rem;">Minimal</div>
+                        </div>
+                    </label>
+                    
+                    <label class="template-option">
+                        <input type="radio" name="cardTemplate" value="elegant">
+                        <div class="template-preview">
+                            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #f1f5f9; font-weight: 600; font-size: 0.75rem;">Elegant</div>
+                        </div>
+                    </label>
+                    
+                    <label class="template-option">
+                        <input type="radio" name="cardTemplate" value="vibrant">
+                        <div class="template-preview">
+                            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); height: 60px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem;">Vibrant</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 24px;">
                 <label>Quick Amount Presets</label>
                 <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Customize your quick amount buttons</p>
                 
@@ -1939,12 +2002,7 @@
         
         // Settings Modal Functions
         function openSettingsModal() {
-            // Load current preset values
-            document.getElementById('preset1').value = presetAmounts[0] || '';
-            document.getElementById('preset2').value = presetAmounts[1] || '';
-            document.getElementById('preset3').value = presetAmounts[2] || '';
-            document.getElementById('preset4').value = presetAmounts[3] || '';
-            
+            loadSettings();
             document.getElementById('settingsModal').classList.add('active');
         }
         
@@ -1962,8 +2020,28 @@
             presetAmounts = [p1, p2, p3, p4];
             savePresets();
             updatePresetButtons();
+            
+            // Save selected template
+            const selectedTemplate = document.querySelector('input[name="cardTemplate"]:checked').value;
+            localStorage.setItem('qrCardTemplate', selectedTemplate);
+            
             closeSettingsModal();
             alert('✅ Settings saved successfully!');
+        }
+        
+        function loadSettings() {
+            // Load presets
+            loadPresets();
+            const presets = getPresets();
+            document.getElementById('preset1').value = presets[0];
+            document.getElementById('preset2').value = presets[1];
+            document.getElementById('preset3').value = presets[2];
+            document.getElementById('preset4').value = presets[3];
+            
+            // Load template
+            const savedTemplate = localStorage.getItem('qrCardTemplate') || 'modern';
+            const templateRadio = document.querySelector(`input[name="cardTemplate"][value="${savedTemplate}"]`);
+            if (templateRadio) templateRadio.checked = true;
         }
         
         // Share Modal Functions
@@ -1979,6 +2057,344 @@
             document.getElementById('shareModal').classList.remove('active');
         }
         
+        // QR Card Template Renderer
+        async function renderQRTemplate(sourceCanvas, qrInfo, profileColor) {
+            const template = localStorage.getItem('qrCardTemplate') || 'modern';
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const qrSize = 320;
+            const cardWidth = 480;
+            const cardHeight = 680;
+            
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
+            
+            switch(template) {
+                case 'modern':
+                    await renderModernTemplate(ctx, sourceCanvas, qrInfo, profileColor, cardWidth, cardHeight, qrSize);
+                    break;
+                case 'minimal':
+                    await renderMinimalTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize);
+                    break;
+                case 'elegant':
+                    await renderElegantTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize);
+                    break;
+                case 'vibrant':
+                    await renderVibrantTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize);
+                    break;
+                default:
+                    await renderModernTemplate(ctx, sourceCanvas, qrInfo, profileColor, cardWidth, cardHeight, qrSize);
+            }
+            
+            return canvas;
+        }
+        
+        // Modern Template (Original)
+        async function renderModernTemplate(ctx, sourceCanvas, qrInfo, profileColor, cardWidth, cardHeight, qrSize) {
+            const borderRadius = 24;
+            
+            function roundRect(x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+            
+            // Background gradient
+            roundRect(0, 0, cardWidth, cardHeight, borderRadius);
+            const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+            const colors = getColorGradient(profileColor);
+            bgGradient.addColorStop(0, colors[0]);
+            bgGradient.addColorStop(1, colors[1]);
+            ctx.fillStyle = bgGradient;
+            ctx.fill();
+            
+            // Decorative circles
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(60, 60, 100, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cardWidth - 50, cardHeight - 50, 120, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // Header
+            const headerPadding = 24;
+            roundRect(headerPadding, headerPadding, cardWidth - headerPadding * 2, 90, 16);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 26px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('UPI PAYMENT', cardWidth / 2, headerPadding + 42);
+            ctx.font = '15px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerPadding + 68);
+            
+            // QR Code
+            const qrY = 138;
+            const qrX = (cardWidth - qrSize - 40) / 2;
+            
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 10;
+            
+            roundRect(qrX, qrY, qrSize + 40, qrSize + 40, 16);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            
+            ctx.drawImage(sourceCanvas, qrX + 20, qrY + 20, qrSize, qrSize);
+            
+            // Payment Info
+            const infoY = qrY + qrSize + 70;
+            const infoLeft = 50;
+            
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText('PAY TO', infoLeft, infoY);
+            
+            ctx.font = 'bold 22px Inter, sans-serif';
+            ctx.fillText(qrInfo.name, infoLeft, infoY + 30);
+            
+            ctx.font = '14px Inter, sans-serif';
+            ctx.globalAlpha = 0.9;
+            ctx.fillText(qrInfo.upiId, infoLeft, infoY + 55);
+            ctx.globalAlpha = 1;
+            
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.fillText('AMOUNT', infoLeft, infoY + 90);
+            
+            const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 95, infoLeft + 200, infoY + 120);
+            amountGradient.addColorStop(0, colors[0]);
+            amountGradient.addColorStop(1, colors[1]);
+            ctx.fillStyle = amountGradient;
+            ctx.font = 'bold 36px Inter, sans-serif';
+            ctx.fillText(`₹${qrInfo.amount}`, infoLeft, infoY + 122);
+        }
+        
+        // Minimal Template (Clean & Simple)
+        async function renderMinimalTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize) {
+            // White background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+            
+            // Border
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, cardWidth, cardHeight);
+            
+            // Title
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 32px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCAN TO PAY', cardWidth / 2, 60);
+            
+            // Thin line
+            ctx.strokeStyle = '#cbd5e0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(80, 90);
+            ctx.lineTo(cardWidth - 80, 90);
+            ctx.stroke();
+            
+            // QR Code
+            const qrX = (cardWidth - qrSize) / 2;
+            const qrY = 130;
+            ctx.drawImage(sourceCanvas, qrX, qrY, qrSize, qrSize);
+            
+            // Info section
+            const infoY = qrY + qrSize + 50;
+            ctx.font = '18px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Pay to', cardWidth / 2, infoY);
+            
+            ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.fillStyle = '#1e293b';
+            ctx.fillText(qrInfo.name, cardWidth / 2, infoY + 35);
+            
+            ctx.font = '16px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(qrInfo.upiId, cardWidth / 2, infoY + 65);
+            
+            // Amount box
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(140, infoY + 85, 200, 60);
+            
+            ctx.font = 'bold 32px Inter, sans-serif';
+            ctx.fillStyle = '#1e293b';
+            ctx.fillText(`₹${qrInfo.amount}`, cardWidth / 2, infoY + 125);
+        }
+        
+        // Elegant Template (Dark & Premium)
+        async function renderElegantTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize) {
+            // Dark gradient background
+            const gradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+            gradient.addColorStop(0, '#1e293b');
+            gradient.addColorStop(1, '#334155');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+            
+            // Gold accent line
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(cardWidth, 0);
+            ctx.stroke();
+            
+            // Title
+            ctx.fillStyle = '#f1f5f9';
+            ctx.font = 'bold 28px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAYMENT REQUEST', cardWidth / 2, 60);
+            
+            // Gold decorative elements
+            ctx.fillStyle = '#f59e0b';
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(0, 80, cardWidth, 2);
+            ctx.globalAlpha = 1;
+            
+            // QR Code with gold border
+            const qrX = (cardWidth - qrSize - 20) / 2;
+            const qrY = 120;
+            
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 40, qrSize + 40);
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(qrX, qrY, qrSize + 20, qrSize + 20);
+            ctx.drawImage(sourceCanvas, qrX + 10, qrY + 10, qrSize, qrSize);
+            
+            // Info
+            const infoY = qrY + qrSize + 70;
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('PAYEE', cardWidth / 2, infoY);
+            
+            ctx.font = 'bold 26px Inter, sans-serif';
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillText(qrInfo.name, cardWidth / 2, infoY + 35);
+            
+            ctx.font = '15px Inter, sans-serif';
+            ctx.fillStyle = '#cbd5e0';
+            ctx.fillText(qrInfo.upiId, cardWidth / 2, infoY + 62);
+            
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillText('AMOUNT', cardWidth / 2, infoY + 95);
+            
+            ctx.font = 'bold 40px Inter, sans-serif';
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillText(`₹${qrInfo.amount}`, cardWidth / 2, infoY + 135);
+        }
+        
+        // Vibrant Template (Colorful & Fun)
+        async function renderVibrantTemplate(ctx, sourceCanvas, qrInfo, cardWidth, cardHeight, qrSize) {
+            // Vibrant gradient background
+            const gradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+            gradient.addColorStop(0, '#f093fb');
+            gradient.addColorStop(0.5, '#f5576c');
+            gradient.addColorStop(1, '#4facfe');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+            
+            // Animated circles effect
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * cardWidth, Math.random() * cardHeight, 50 + Math.random() * 100, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            
+            // Title with shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetY = 5;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 36px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('💰 PAY NOW', cardWidth / 2, 70);
+            
+            ctx.shadowColor = 'transparent';
+            
+            // QR Code with white frame
+            const qrX = (cardWidth - qrSize - 40) / 2;
+            const qrY = 120;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 20;
+            ctx.fillRect(qrX - 15, qrY - 15, qrSize + 70, qrSize + 70);
+            ctx.shadowColor = 'transparent';
+            
+            ctx.drawImage(sourceCanvas, qrX + 10, qrY + 10, qrSize, qrSize);
+            
+            // Info bubble
+            const infoY = qrY + qrSize + 80;
+            const bubbleHeight = 140;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.roundRect(40, infoY, cardWidth - 80, bubbleHeight, 20);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+            
+            // Text
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 22px Inter, sans-serif';
+            ctx.fillText(qrInfo.name, cardWidth / 2, infoY + 35);
+            
+            ctx.font = '16px Inter, sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(qrInfo.upiId, cardWidth / 2, infoY + 60);
+            
+            // Amount
+            const amountGradient = ctx.createLinearGradient(cardWidth / 2 - 100, infoY + 80, cardWidth / 2 + 100, infoY + 120);
+            amountGradient.addColorStop(0, '#f093fb');
+            amountGradient.addColorStop(1, '#f5576c');
+            ctx.fillStyle = amountGradient;
+            ctx.font = 'bold 38px Inter, sans-serif';
+            ctx.fillText(`₹${qrInfo.amount}`, cardWidth / 2, infoY + 110);
+        }
+        
+        // Helper function to get color gradients
+        function getColorGradient(color) {
+            const gradients = {
+                default: ['#667eea', '#764ba2'],
+                blue: ['#4299e1', '#3182ce'],
+                green: ['#48bb78', '#38a169'],
+                orange: ['#f6ad55', '#ed8936'],
+                pink: ['#f687b3', '#d53f8c'],
+                teal: ['#4fd1c5', '#319795']
+            };
+            return gradients[color] || gradients.default;
+        }
+
         async function shareQROnly() {
             closeShareModal();
             await shareQR();
