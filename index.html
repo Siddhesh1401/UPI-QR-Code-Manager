@@ -1077,73 +1077,189 @@
         @media (max-width: 768px) {
             .upi-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 16px;
+                padding: 0;
+            }
+            
+            .header {
+                padding: 16px;
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
             }
             
             .header h1 {
                 font-size: 1.3rem;
+                margin: 0;
             }
 
             .add-btn {
-                padding: 10px 16px;
-                font-size: 0.9rem;
-                min-height: 48px;
+                padding: 12px 16px;
+                font-size: 0.85rem;
+                min-height: 44px;
+                white-space: nowrap;
             }
             
             .header > div {
+                display: flex;
+                flex-wrap: wrap;
                 gap: 8px !important;
+                justify-content: space-between;
+            }
+            
+            .header > div button {
+                flex: 1;
+                min-width: calc(33.333% - 6px);
             }
             
             .modal {
-                align-items: center;
+                align-items: flex-end;
                 justify-content: flex-end;
-                padding-bottom: env(safe-area-inset-bottom);
+                padding: 0;
             }
 
             .modal-content {
                 padding: 20px;
                 border-radius: 24px 24px 0 0;
-                max-height: 88vh;
+                max-height: 90vh;
+                overflow-y: auto;
                 margin: 0;
                 width: 100%;
+                max-width: 100%;
+            }
+            
+            .payment-content {
+                max-height: 85vh;
             }
 
             .main-content {
-                padding: 20px 15px;
+                padding: 16px;
             }
 
             .form-group {
-                margin-bottom: 18px;
-            }
-
-            .form-group label {
-                font-size: 0.95rem;
-                margin-bottom: 8px;
-            }
-
-            .form-group input {
-                padding: 16px;
-                font-size: 16px;
-                min-height: 54px;
-            }
-
-            #qrcode-container {
-                padding: 20px;
-                min-height: 220px;
-                margin: 16px auto;
-            }
-
-            .payee-info {
-                padding: 16px;
                 margin-bottom: 16px;
             }
 
+            .form-group label {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+            }
+
+            .form-group input, 
+            .form-group select {
+                padding: 14px;
+                font-size: 16px;
+                min-height: 50px;
+            }
+
+            #qrcode-container {
+                padding: 16px;
+                min-height: 200px;
+                margin: 12px auto;
+            }
+
+            .payee-info {
+                padding: 14px;
+                margin-bottom: 14px;
+            }
+
             .payee-info h3 {
-                font-size: 1.15rem;
+                font-size: 1.1rem;
             }
 
             .payee-info p {
+                font-size: 0.85rem;
+            }
+            
+            .color-picker {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .amount-presets {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .preset-btn {
+                padding: 12px 8px;
                 font-size: 0.9rem;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            
+            .modal-buttons .btn {
+                width: 100%;
+                padding: 14px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+            
+            .upi-card {
+                padding: 20px;
+            }
+            
+            .upi-card h3 {
+                font-size: 1.1rem;
+            }
+            
+            .upi-card p {
+                font-size: 0.85rem;
+            }
+            
+            .icon-btn {
+                min-width: 40px;
+                min-height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .qr-display-content {
+                padding: 20px;
+                border-radius: 24px 24px 0 0;
+                max-width: 100%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .qr-display-qr {
+                padding: 16px;
+                max-width: 100%;
+            }
+            
+            .qr-display-qr canvas,
+            .qr-display-qr img {
+                max-width: 280px !important;
+                height: auto !important;
+            }
+            
+            .qr-display-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .qr-display-btn {
+                width: 100%;
+                padding: 14px;
+                font-size: 0.95rem;
+            }
+            
+            .empty-state-icon {
+                font-size: 4rem;
+            }
+            
+            .empty-state h2 {
+                font-size: 1.3rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -1165,8 +1281,8 @@
             <button class="add-btn" id="themeToggle" onclick="toggleTheme()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 12px 20px;">
                 🌙
             </button>
-            <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
-                🔄 Refresh
+            <button class="add-btn" onclick="openSettingsModal()" style="background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.3); color: #a78bfa; padding: 12px 20px;">
+                ⚙️
             </button>
             <button class="add-btn" onclick="openAddModal()">+ Add UPI</button>
         </div>
@@ -1266,7 +1382,6 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Generate QR Code</button>
-                <button type="button" class="btn" onclick="generateQuickLink()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; margin-top: 12px;">🔗 Generate Quick Link</button>
             </form>
 
             <div id="qrcode-container" style="display: none; visibility: hidden; position: absolute;">
@@ -1305,7 +1420,7 @@
             </div>
 
             <div class="qr-display-actions">
-                <button class="qr-display-btn qr-display-btn-share" onclick="shareQR()">
+                <button class="qr-display-btn qr-display-btn-share" onclick="openShareModal()">
                     📤 Share
                 </button>
                 <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
@@ -1314,6 +1429,73 @@
                 <button class="qr-display-btn" onclick="saveToGallery()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
                     💾 Save to Gallery
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Options Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Share Payment</h2>
+                <button class="close-btn" onclick="closeShareModal()">&times;</button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <button class="btn" onclick="shareQROnly()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 16px;">
+                    📷 Share QR Code Only
+                </button>
+                
+                <button class="btn" onclick="shareLinkOnly()" style="background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); color: white; border: none; padding: 16px;">
+                    🔗 Share Payment Link Only
+                </button>
+                
+                <button class="btn" onclick="shareBoth()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 16px;">
+                    💫 Share Both (QR + Link)
+                </button>
+                
+                <button class="btn btn-secondary" onclick="closeShareModal()" style="margin-top: 8px;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Quick Amount Presets</label>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">Customize your quick amount buttons</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div>
+                        <label for="preset1" style="font-size: 0.85rem;">Preset 1 (₹)</label>
+                        <input type="number" id="preset1" min="1" step="1" placeholder="100" style="margin-top: 4px;">
+                    </div>
+                    <div>
+                        <label for="preset2" style="font-size: 0.85rem;">Preset 2 (₹)</label>
+                        <input type="number" id="preset2" min="1" step="1" placeholder="200" style="margin-top: 4px;">
+                    </div>
+                    <div>
+                        <label for="preset3" style="font-size: 0.85rem;">Preset 3 (₹)</label>
+                        <input type="number" id="preset3" min="1" step="1" placeholder="500" style="margin-top: 4px;">
+                    </div>
+                    <div>
+                        <label for="preset4" style="font-size: 0.85rem;">Preset 4 (₹)</label>
+                        <input type="number" id="preset4" min="1" step="1" placeholder="1000" style="margin-top: 4px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
             </div>
         </div>
     </div>
@@ -1413,6 +1595,7 @@
         let upiProfiles = [];
         let editingIndex = -1;
         let currentProfile = null;
+        let presetAmounts = [100, 200, 500, 1000]; // Default presets
 
         // Load data from localStorage
         function loadData() {
@@ -1420,12 +1603,25 @@
             if (saved) {
                 upiProfiles = JSON.parse(saved);
             }
+            
+            // Load preset amounts
+            const savedPresets = localStorage.getItem('presetAmounts');
+            if (savedPresets) {
+                presetAmounts = JSON.parse(savedPresets);
+            }
+            
             renderProfiles();
+            updatePresetButtons();
         }
 
         // Save data to localStorage
         function saveData() {
             localStorage.setItem('upiProfiles', JSON.stringify(upiProfiles));
+        }
+        
+        // Save preset amounts
+        function savePresets() {
+            localStorage.setItem('presetAmounts', JSON.stringify(presetAmounts));
         }
 
         // Render UPI profiles
@@ -1536,8 +1732,21 @@
         function setAmount(value) {
             const amountInput = document.getElementById('paymentAmount');
             if (amountInput) {
-                amountInput.value = value;
+                // Add to existing amount instead of replacing
+                const currentAmount = parseFloat(amountInput.value) || 0;
+                const newAmount = currentAmount + value;
+                amountInput.value = newAmount;
                 amountInput.focus();
+            }
+        }
+        
+        // Update preset buttons with saved values
+        function updatePresetButtons() {
+            const container = document.querySelector('.amount-presets');
+            if (container) {
+                container.innerHTML = presetAmounts.map((amount, index) => 
+                    `<button type="button" class="preset-btn" onclick="setAmount(${amount})">₹${amount}</button>`
+                ).join('');
             }
         }
 
@@ -1586,6 +1795,9 @@
                 const form = document.getElementById('qrForm');
                 if (form) form.reset();
                 
+                // Update preset buttons
+                updatePresetButtons();
+                
                 const modal = document.getElementById('paymentModal');
                 if (modal) {
                     modal.classList.add('active');
@@ -1601,6 +1813,132 @@
             } catch (error) {
                 console.error('Error opening payment modal:', error);
                 alert('Error opening payment form. Please try again.');
+            }
+        }
+        
+        // Settings Modal Functions
+        function openSettingsModal() {
+            // Load current preset values
+            document.getElementById('preset1').value = presetAmounts[0] || '';
+            document.getElementById('preset2').value = presetAmounts[1] || '';
+            document.getElementById('preset3').value = presetAmounts[2] || '';
+            document.getElementById('preset4').value = presetAmounts[3] || '';
+            
+            document.getElementById('settingsModal').classList.add('active');
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+        
+        function saveSettings() {
+            // Get preset values
+            const p1 = parseInt(document.getElementById('preset1').value) || 100;
+            const p2 = parseInt(document.getElementById('preset2').value) || 200;
+            const p3 = parseInt(document.getElementById('preset3').value) || 500;
+            const p4 = parseInt(document.getElementById('preset4').value) || 1000;
+            
+            presetAmounts = [p1, p2, p3, p4];
+            savePresets();
+            updatePresetButtons();
+            closeSettingsModal();
+            alert('✅ Settings saved successfully!');
+        }
+        
+        // Share Modal Functions
+        function openShareModal() {
+            if (!currentQRInfo) {
+                alert('⚠️ Please generate a QR code first');
+                return;
+            }
+            document.getElementById('shareModal').classList.add('active');
+        }
+        
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.remove('active');
+        }
+        
+        async function shareQROnly() {
+            closeShareModal();
+            await shareQR();
+        }
+        
+        async function shareLinkOnly() {
+            closeShareModal();
+            if (!currentQRInfo) {
+                alert('⚠️ QR information not found');
+                return;
+            }
+            
+            const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+            const shareText = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Click to pay: ${upiLink}`;
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'UPI Payment Link',
+                        text: shareText
+                    });
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        copyToClipboard(shareText);
+                    }
+                }
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+        
+        async function shareBoth() {
+            closeShareModal();
+            if (!currentQRInfo) {
+                alert('⚠️ QR information not found');
+                return;
+            }
+            
+            try {
+                // Get QR image
+                const qrDisplayContainer = document.getElementById('qrDisplayQR');
+                let canvas = qrDisplayContainer.querySelector("canvas");
+                let img = qrDisplayContainer.querySelector("img");
+                
+                if (!canvas && !img) {
+                    const qrContainer = document.getElementById('qrcode-container');
+                    canvas = qrContainer.querySelector("canvas");
+                    img = qrContainer.querySelector("img");
+                }
+                
+                // Create styled QR blob
+                const blob = await createStyledQRBlob(canvas || img);
+                const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+                
+                // Create message with link
+                const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+                const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code or click link to pay:\n${upiLink}`;
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'UPI Payment',
+                        text: message
+                    });
+                } else if (navigator.share) {
+                    await navigator.share({
+                        title: 'UPI Payment',
+                        text: message
+                    });
+                    downloadQR();
+                } else {
+                    copyToClipboard(message);
+                    downloadQR();
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Share error:', error);
+                    alert('❌ Could not share. QR will be downloaded.');
+                    downloadQR();
+                }
             }
         }
 
@@ -2163,6 +2501,14 @@
 
         document.getElementById('paymentModal').addEventListener('click', function(e) {
             if (e.target === this) closePaymentModal();
+        });
+        
+        document.getElementById('shareModal').addEventListener('click', function(e) {
+            if (e.target === this) closeShareModal();
+        });
+        
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeSettingsModal();
         });
 
         // Initialize
