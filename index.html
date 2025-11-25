@@ -2056,34 +2056,55 @@
                 
                 // Create message with link
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-                const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code or click link to pay:\n${upiLink}`;
+                const message = `💳 UPI Payment Request
+
+Pay to: ${currentQRInfo.name}
+Amount: ₹${currentQRInfo.amount}
+UPI ID: ${currentQRInfo.upiId}
+
+📱 Scan QR or click: ${upiLink}`;
                 
                 if (navigator.share) {
                     try {
-                        // Check if we can share files
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            // Share image with text - WhatsApp will show text as caption
-                            await navigator.share({
-                                files: [file],
-                                text: message,
-                                title: 'UPI Payment'
-                            });
+                        console.log('Attempting to share both...');
+                        console.log('File:', file);
+                        console.log('Message:', message);
+                        
+                        // Try different share combinations for WhatsApp compatibility
+                        const shareData = {
+                            files: [file],
+                            text: message
+                        };
+                        
+                        if (navigator.canShare && navigator.canShare(shareData)) {
+                            console.log('Can share files + text together');
+                            await navigator.share(shareData);
+                        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            console.log('Can only share files, sharing image then copying text');
+                            // Share image first
+                            await navigator.share({ files: [file] });
+                            // Copy text to clipboard for user to paste
+                            setTimeout(() => {
+                                if (navigator.clipboard) {
+                                    navigator.clipboard.writeText(message).then(() => {
+                                        alert('✅ QR shared! Payment details copied - now paste in WhatsApp');
+                                    });
+                                } else {
+                                    alert('ℹ️ QR shared! Manually copy this:\n\n' + message);
+                                }
+                            }, 1000);
                         } else {
-                            // Fallback: Share text only, then download image
-                            await navigator.share({
-                                title: 'UPI Payment',
-                                text: message
-                            });
-                            // Auto-download QR after sharing text
-                            setTimeout(() => downloadQR(), 500);
+                            console.log('Cannot share files, sharing text only');
+                            await navigator.share({ text: message });
+                            downloadQR();
                         }
                     } catch (shareError) {
                         if (shareError.name !== 'AbortError') {
+                            console.error('Share error:', shareError);
                             throw shareError;
                         }
                     }
                 } else {
-                    // No share API - copy and download
                     copyToClipboard(message);
                     downloadQR();
                 }
