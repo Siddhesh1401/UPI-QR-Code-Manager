@@ -91,9 +91,31 @@
             -webkit-touch-callout: none;
         }
         
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: rgba(15, 23, 42, 0.8);
+            --text-primary: #e2e8f0;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-color: rgba(99, 102, 241, 0.2);
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+        }
+
+        body.light-theme {
+            --bg-primary: #f1f5f9;
+            --bg-secondary: rgba(255, 255, 255, 0.95);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: rgba(99, 102, 241, 0.2);
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: #0a0e27;
+            background: var(--bg-primary);
             background-image: 
                 radial-gradient(at 20% 80%, rgba(120, 119, 198, 0.3) 0px, transparent 50%),
                 radial-gradient(at 80% 0%, rgba(132, 94, 194, 0.3) 0px, transparent 50%),
@@ -106,6 +128,7 @@
             -moz-osx-font-smoothing: grayscale;
             touch-action: manipulation;
             overscroll-behavior: none;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* Animated background */
@@ -132,9 +155,9 @@
 
         /* Header */
         .header {
-            background: rgba(15, 23, 42, 0.8);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            border-bottom: 1px solid var(--border-color);
             padding: 18px 25px;
             display: flex;
             justify-content: space-between;
@@ -143,6 +166,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: background 0.3s ease;
         }
 
         .header h1 {
@@ -491,6 +515,37 @@
 
         .form-group input::placeholder {
             color: #64748b;
+        }
+
+        /* Amount Presets */
+        .amount-presets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .preset-btn {
+            padding: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .preset-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #a78bfa;
+            transform: translateY(-2px);
+        }
+
+        .preset-btn:active {
+            transform: scale(0.95);
         }
 
         .modal-buttons {
@@ -1003,6 +1058,9 @@
     <div class="header">
         <h1>💳 UPI Manager</h1>
         <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="add-btn" id="themeToggle" onclick="toggleTheme()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 12px 20px;">
+                🌙
+            </button>
             <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
                 🔄 Refresh
             </button>
@@ -1071,6 +1129,12 @@
             <form id="qrForm" onsubmit="generateQR(); return false;">
                 <div class="form-group">
                     <label for="paymentAmount">Enter Amount (₹) *</label>
+                    <div class="amount-presets">
+                        <button type="button" class="preset-btn" onclick="setAmount(100)">₹100</button>
+                        <button type="button" class="preset-btn" onclick="setAmount(200)">₹200</button>
+                        <button type="button" class="preset-btn" onclick="setAmount(500)">₹500</button>
+                        <button type="button" class="preset-btn" onclick="setAmount(1000)">₹1000</button>
+                    </div>
                     <input type="number" id="paymentAmount" placeholder="100" step="0.01" min="0.01" required inputmode="decimal">
                 </div>
 
@@ -1179,6 +1243,9 @@
 
         // Splash Screen Handler
         window.addEventListener('load', function() {
+            // Load saved theme
+            loadTheme();
+            
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
                 splash.classList.add('hidden');
@@ -1316,6 +1383,47 @@
         }
 
         // Payment Modal Functions
+        // Quick Amount Preset Function
+        function setAmount(value) {
+            const amountInput = document.getElementById('paymentAmount');
+            if (amountInput) {
+                amountInput.value = value;
+                amountInput.focus();
+            }
+        }
+
+        // Theme Toggle Function
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.classList.contains('light-theme') ? 'light' : 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            if (newTheme === 'light') {
+                body.classList.add('light-theme');
+            } else {
+                body.classList.remove('light-theme');
+            }
+            
+            // Store theme preference
+            localStorage.setItem('theme', newTheme);
+            
+            // Update theme icon
+            const themeBtn = document.querySelector('.theme-toggle');
+            if (themeBtn) {
+                themeBtn.textContent = newTheme === 'light' ? '☀️' : '🌙';
+            }
+        }
+
+        // Load saved theme on page load
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                const themeBtn = document.querySelector('.theme-toggle');
+                if (themeBtn) themeBtn.textContent = '☀️';
+            }
+        }
+
         function openPaymentModal(index) {
             try {
                 currentProfile = upiProfiles[index];
