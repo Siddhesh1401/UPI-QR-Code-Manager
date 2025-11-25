@@ -432,6 +432,27 @@
             }
         }
 
+        @keyframes slideUpBounce {
+            0% {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            60% {
+                transform: translateX(-50%) translateY(-10px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes slideDownFade {
+            to {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -1558,12 +1579,95 @@
     </div>
 
     <script>
+        // PWA Install Prompt
+        let deferredPrompt;
+        let installButton;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing
+            e.preventDefault();
+            // Save the event for later use
+            deferredPrompt = e;
+            
+            // Show custom install button
+            showInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            // Create install banner if not exists
+            if (document.getElementById('installBanner')) return;
+            
+            const banner = document.createElement('div');
+            banner.id = 'installBanner';
+            banner.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 50px;
+                box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+                z-index: 9999;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                animation: slideUpBounce 0.5s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                max-width: 90%;
+            `;
+            banner.innerHTML = '📱 Install App for Better Experience • Tap to Install';
+            
+            banner.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response: ${outcome}`);
+                    deferredPrompt = null;
+                }
+                banner.remove();
+            });
+            
+            document.body.appendChild(banner);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (banner.parentElement) {
+                    banner.style.animation = 'slideDownFade 0.5s ease-out';
+                    setTimeout(() => banner.remove(), 500);
+                }
+            }, 10000);
+        }
+
+        // Detect if app is installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed successfully!');
+            deferredPrompt = null;
+            alert('✅ App installed! You can now use it from your home screen.');
+        });
+
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then((registration) => {
                         console.log('Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker available
+                                    if (confirm('🎉 New version available! Reload to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('Service Worker registration failed:', error);
@@ -2054,97 +2158,32 @@
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
-                // Create message with link
-                // Create enhanced canvas with QR + text embedded in image
-                const enhancedCanvas = document.createElement('canvas');
-                const ectx = enhancedCanvas.getContext('2d');
-                
-                // Make canvas taller to include clickable link text
-                const totalHeight = cardHeight + 180;
-                enhancedCanvas.width = cardWidth;
-                enhancedCanvas.height = totalHeight;
-                
-                // Draw the existing styled QR card
-                ectx.drawImage(styledCanvas, 0, 0);
-                
-                // Add text section below
-                const textY = cardHeight + 20;
-                ectx.fillStyle = '#1e293b';
-                ectx.font = 'bold 18px Inter, sans-serif';
-                ectx.textAlign = 'center';
-                ectx.fillText('📱 Payment Link:', cardWidth / 2, textY);
-                
-                // UPI Link
+                // Create the message text (like your screenshot format)
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
                 
-                // Draw link in blue
-                ectx.fillStyle = '#2563eb';
-                ectx.font = '14px Inter, sans-serif';
-                
-                // Split long link into multiple lines if needed
-                const maxWidth = cardWidth - 40;
-                const words = upiLink.split(/(?=&)/);
-                let line = '';
-                let lineY = textY + 30;
-                
-                for (let i = 0; i < words.length; i++) {
-                    const testLine = line + words[i];
-                    const metrics = ectx.measureText(testLine);
-                    
-                    if (metrics.width > maxWidth && line !== '') {
-                        ectx.fillText(line, cardWidth / 2, lineY);
-                        line = words[i];
-                        lineY += 20;
-                    } else {
-                        line = testLine;
-                    }
-                }
-                ectx.fillText(line, cardWidth / 2, lineY);
-                
-                // Add instruction
-                ectx.fillStyle = '#64748b';
-                ectx.font = '12px Inter, sans-serif';
-                ectx.fillText('👆 Long press link above to copy and open in payment app', cardWidth / 2, lineY + 35);
-                
-                // Convert enhanced canvas to blob
-                const enhancedBlob = await new Promise(resolve => enhancedCanvas.toBlob(resolve, 'image/png'));
-                const enhancedFileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
-                const enhancedFile = new File([enhancedBlob], enhancedFileName, { type: 'image/png' });
-                
-                // Share message with link (for platforms that support text+files)
-                const message = `💳 UPI Payment Request
-
-Pay to: ${currentQRInfo.name}
-Amount: ₹${currentQRInfo.amount}
-
-${upiLink}`;
+                const message = `Please find my UPI details
+Name - ${currentQRInfo.name}
+UPI Handle - ${currentQRInfo.upiId}
+Link to directly pay me - ${upiLink}`;
                 
                 if (navigator.share) {
                     try {
-                        console.log('Sharing QR with embedded link...');
+                        console.log('Sharing QR with payment details...');
                         
-                        // Try to share both
-                        if (navigator.canShare && navigator.canShare({ files: [enhancedFile], text: message })) {
-                            console.log('Platform supports files + text');
-                            await navigator.share({ 
-                                files: [enhancedFile],
-                                text: message
-                            });
-                        } else if (navigator.canShare && navigator.canShare({ files: [enhancedFile] })) {
-                            console.log('Platform supports files only, copying text to clipboard');
-                            // Copy link to clipboard for easy access
-                            if (navigator.clipboard) {
-                                await navigator.clipboard.writeText(upiLink);
-                            }
-                            await navigator.share({ files: [enhancedFile] });
-                            // Show success message
-                            setTimeout(() => {
-                                alert('✅ QR shared with payment link!\n\n💡 UPI link copied to clipboard.\nPaste in chat if needed.');
-                            }, 500);
-                        } else {
-                            console.log('Sharing text only');
-                            await navigator.share({ text: message });
+                        // Copy the message to clipboard FIRST
+                        if (navigator.clipboard) {
+                            await navigator.clipboard.writeText(message);
+                            console.log('Message copied to clipboard');
                         }
+                        
+                        // Then share the QR image
+                        await navigator.share({ files: [file] });
+                        
+                        // After share dialog is selected, show instruction
+                        setTimeout(() => {
+                            alert('✅ QR Code shared!\n\n📋 Payment details copied to clipboard!\n\nNow in WhatsApp:\n1. QR image is attached\n2. Tap in the message field\n3. Tap "Paste" to add payment details\n4. Send! 🚀');
+                        }, 300);
+                        
                     } catch (shareError) {
                         if (shareError.name !== 'AbortError') {
                             console.error('Share error:', shareError);
@@ -2153,10 +2192,10 @@ ${upiLink}`;
                     }
                 } else {
                     copyToClipboard(message);
-                    // Download the enhanced image
+                    // Download the QR
                     const downloadLink = document.createElement('a');
-                    downloadLink.href = enhancedCanvas.toDataURL('image/png');
-                    downloadLink.download = enhancedFileName;
+                    downloadLink.href = styledCanvas.toDataURL('image/png');
+                    downloadLink.download = fileName;
                     downloadLink.click();
                 }
             } catch (error) {

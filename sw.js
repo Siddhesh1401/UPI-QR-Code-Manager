@@ -1,10 +1,10 @@
 // Service Worker for UPI QR Manager PWA
-const CACHE_NAME = 'upi-qr-manager-v1';
+const CACHE_NAME = 'upi-qr-manager-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.svg',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.svg',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];

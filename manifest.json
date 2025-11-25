@@ -7,8 +7,8 @@
   "display": "standalone",
   "background_color": "#0a0e27",
   "theme_color": "#667eea",
-  "orientation": "portrait",
-  "categories": ["finance", "utilities"],
+  "orientation": "portrait-primary",
+  "categories": ["finance", "utilities", "productivity"],
   "icons": [
     {
       "src": "icon.svg",
@@ -16,5 +16,39 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "icon.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "upi",
+      "url": "/?upi=%s"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Generate QR",
+      "short_name": "QR",
+      "description": "Generate a new payment QR code",
+      "url": "/",
+      "icons": [{ "src": "icon.svg", "sizes": "192x192" }]
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui"],
+  "prefer_related_applications": false
 }
