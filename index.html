@@ -2055,48 +2055,95 @@
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
                 // Create message with link
+                // Create enhanced canvas with QR + text embedded in image
+                const enhancedCanvas = document.createElement('canvas');
+                const ectx = enhancedCanvas.getContext('2d');
+                
+                // Make canvas taller to include clickable link text
+                const totalHeight = cardHeight + 180;
+                enhancedCanvas.width = cardWidth;
+                enhancedCanvas.height = totalHeight;
+                
+                // Draw the existing styled QR card
+                ectx.drawImage(styledCanvas, 0, 0);
+                
+                // Add text section below
+                const textY = cardHeight + 20;
+                ectx.fillStyle = '#1e293b';
+                ectx.font = 'bold 18px Inter, sans-serif';
+                ectx.textAlign = 'center';
+                ectx.fillText('📱 Payment Link:', cardWidth / 2, textY);
+                
+                // UPI Link
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+                
+                // Draw link in blue
+                ectx.fillStyle = '#2563eb';
+                ectx.font = '14px Inter, sans-serif';
+                
+                // Split long link into multiple lines if needed
+                const maxWidth = cardWidth - 40;
+                const words = upiLink.split(/(?=&)/);
+                let line = '';
+                let lineY = textY + 30;
+                
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = line + words[i];
+                    const metrics = ectx.measureText(testLine);
+                    
+                    if (metrics.width > maxWidth && line !== '') {
+                        ectx.fillText(line, cardWidth / 2, lineY);
+                        line = words[i];
+                        lineY += 20;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                ectx.fillText(line, cardWidth / 2, lineY);
+                
+                // Add instruction
+                ectx.fillStyle = '#64748b';
+                ectx.font = '12px Inter, sans-serif';
+                ectx.fillText('👆 Long press link above to copy and open in payment app', cardWidth / 2, lineY + 35);
+                
+                // Convert enhanced canvas to blob
+                const enhancedBlob = await new Promise(resolve => enhancedCanvas.toBlob(resolve, 'image/png'));
+                const enhancedFileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
+                const enhancedFile = new File([enhancedBlob], enhancedFileName, { type: 'image/png' });
+                
+                // Share message with link (for platforms that support text+files)
                 const message = `💳 UPI Payment Request
 
 Pay to: ${currentQRInfo.name}
 Amount: ₹${currentQRInfo.amount}
-UPI ID: ${currentQRInfo.upiId}
 
-📱 Scan QR or click: ${upiLink}`;
+${upiLink}`;
                 
                 if (navigator.share) {
                     try {
-                        console.log('Attempting to share both...');
-                        console.log('File:', file);
-                        console.log('Message:', message);
+                        console.log('Sharing QR with embedded link...');
                         
-                        // Try different share combinations for WhatsApp compatibility
-                        const shareData = {
-                            files: [file],
-                            text: message
-                        };
-                        
-                        // WhatsApp ignores text when sharing files, so we need to copy text to clipboard
-                        // and let user paste it manually after sharing the image
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            console.log('Sharing image, text will be copied to clipboard');
-                            
-                            // First, copy text to clipboard
+                        // Try to share both
+                        if (navigator.canShare && navigator.canShare({ files: [enhancedFile], text: message })) {
+                            console.log('Platform supports files + text');
+                            await navigator.share({ 
+                                files: [enhancedFile],
+                                text: message
+                            });
+                        } else if (navigator.canShare && navigator.canShare({ files: [enhancedFile] })) {
+                            console.log('Platform supports files only, copying text to clipboard');
+                            // Copy link to clipboard for easy access
                             if (navigator.clipboard) {
-                                await navigator.clipboard.writeText(message);
+                                await navigator.clipboard.writeText(upiLink);
                             }
-                            
-                            // Then share the image
-                            await navigator.share({ files: [file] });
-                            
-                            // Show instruction after share dialog closes
+                            await navigator.share({ files: [enhancedFile] });
+                            // Show success message
                             setTimeout(() => {
-                                alert('✅ QR shared!\n\n💡 Payment details are copied to clipboard.\n\nNow in WhatsApp:\n1. The QR image is attached\n2. Long press in the text field\n3. Tap "Paste" to add payment link');
+                                alert('✅ QR shared with payment link!\n\n💡 UPI link copied to clipboard.\nPaste in chat if needed.');
                             }, 500);
                         } else {
-                            console.log('Cannot share files, sharing text only');
+                            console.log('Sharing text only');
                             await navigator.share({ text: message });
-                            downloadQR();
                         }
                     } catch (shareError) {
                         if (shareError.name !== 'AbortError') {
@@ -2106,7 +2153,11 @@ UPI ID: ${currentQRInfo.upiId}
                     }
                 } else {
                     copyToClipboard(message);
-                    downloadQR();
+                    // Download the enhanced image
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = enhancedCanvas.toDataURL('image/png');
+                    downloadLink.download = enhancedFileName;
+                    downloadLink.click();
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
