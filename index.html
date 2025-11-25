@@ -2327,13 +2327,11 @@
         }
         
         function loadSettings() {
-            // Load presets
-            loadPresets();
-            const presets = getPresets();
-            document.getElementById('preset1').value = presets[0];
-            document.getElementById('preset2').value = presets[1];
-            document.getElementById('preset3').value = presets[2];
-            document.getElementById('preset4').value = presets[3];
+            // Load presets from global variable
+            document.getElementById('preset1').value = presetAmounts[0];
+            document.getElementById('preset2').value = presetAmounts[1];
+            document.getElementById('preset3').value = presetAmounts[2];
+            document.getElementById('preset4').value = presetAmounts[3];
             
             // Load template
             const savedTemplate = localStorage.getItem('qrCardTemplate') || 'modern';
