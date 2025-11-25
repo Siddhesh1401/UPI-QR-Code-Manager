@@ -1221,33 +1221,79 @@
             }
             
             .qr-display-content {
-                padding: 20px;
-                border-radius: 24px 24px 0 0;
+                padding: 16px;
+                border-radius: 20px 20px 0 0;
                 max-width: 100%;
-                max-height: 90vh;
-                overflow-y: auto;
+                width: 100%;
+                max-height: 95vh;
+                overflow-y: visible;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .qr-display-header {
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+            }
+            
+            .qr-display-header h2 {
+                font-size: 1.2rem;
+                margin-bottom: 4px;
+            }
+            
+            .qr-display-header p {
+                font-size: 0.8rem;
+            }
+            
+            .qr-display-box {
+                padding: 16px;
+                margin-bottom: 12px;
             }
             
             .qr-display-qr {
-                padding: 16px;
+                padding: 12px;
                 max-width: 100%;
             }
             
             .qr-display-qr canvas,
             .qr-display-qr img {
-                max-width: 280px !important;
+                max-width: 220px !important;
                 height: auto !important;
             }
             
+            .qr-display-info {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .qr-display-info-row {
+                padding: 8px 0;
+            }
+            
+            .qr-display-info-label {
+                font-size: 0.8rem;
+            }
+            
+            .qr-display-info-value {
+                font-size: 0.9rem;
+            }
+            
+            .qr-display-amount {
+                font-size: 1.3rem !important;
+            }
+            
             .qr-display-actions {
-                flex-direction: column;
-                gap: 10px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: auto;
             }
             
             .qr-display-btn {
-                width: 100%;
-                padding: 14px;
-                font-size: 0.95rem;
+                flex: 1;
+                min-width: calc(50% - 4px);
+                padding: 12px 8px;
+                font-size: 0.85rem;
             }
             
             .empty-state-icon {
@@ -1390,49 +1436,6 @@
         </div>
     </div>
 
-    <!-- QR Display Modal -->
-    <div id="qrDisplayModal">
-        <div class="qr-display-content">
-            <button class="qr-display-close" onclick="closeQRDisplay()">&times;</button>
-            
-            <div class="qr-display-header">
-                <h2>Payment QR Code</h2>
-                <p>Scan to pay instantly</p>
-            </div>
-
-            <div class="qr-display-box">
-                <div class="qr-display-qr" id="qrDisplayQR"></div>
-            </div>
-
-            <div class="qr-display-info">
-                <div class="qr-display-info-row">
-                    <span class="qr-display-info-label">Pay to</span>
-                    <span class="qr-display-info-value" id="qrDisplayName"></span>
-                </div>
-                <div class="qr-display-info-row">
-                    <span class="qr-display-info-label">UPI ID</span>
-                    <span class="qr-display-info-value" id="qrDisplayUPI"></span>
-                </div>
-                <div class="qr-display-info-row">
-                    <span class="qr-display-info-label">Amount</span>
-                    <span class="qr-display-info-value qr-display-amount" id="qrDisplayAmount"></span>
-                </div>
-            </div>
-
-            <div class="qr-display-actions">
-                <button class="qr-display-btn qr-display-btn-share" onclick="openShareModal()">
-                    📤 Share
-                </button>
-                <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
-                    ⬇️ Download
-                </button>
-                <button class="qr-display-btn" onclick="saveToGallery()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
-                    💾 Save to Gallery
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Share Options Modal -->
     <div id="shareModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
@@ -1530,11 +1533,14 @@
             </div>
 
             <div class="qr-display-actions">
-                <button class="qr-display-btn qr-display-btn-share" onclick="shareQR()">
+                <button class="qr-display-btn qr-display-btn-share" onclick="openShareModal()">
                     📤 Share
                 </button>
                 <button class="qr-display-btn qr-display-btn-download" onclick="downloadQR()">
                     ⬇️ Download
+                </button>
+                <button class="qr-display-btn" onclick="saveToGallery()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                    💾 Gallery
                 </button>
             </div>
         </div>
