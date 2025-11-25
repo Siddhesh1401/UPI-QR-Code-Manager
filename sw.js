@@ -1,10 +1,14 @@
 // Service Worker for UPI QR Manager PWA
-const CACHE_NAME = 'upi-qr-manager-v2';
+const CACHE_NAME = 'upi-qr-manager-v3';
+
+// Detect base path
+const baseUrl = self.location.origin + self.registration.scope;
+
 const urlsToCache = [
-  '/UPI-QR-Code-Manager/',
-  '/UPI-QR-Code-Manager/index.html',
-  '/UPI-QR-Code-Manager/manifest.json',
-  '/UPI-QR-Code-Manager/icon.svg',
+  baseUrl,
+  baseUrl + 'index.html',
+  baseUrl + 'manifest.json',
+  baseUrl + 'icon.svg',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
