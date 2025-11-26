@@ -1813,6 +1813,17 @@
             </div>
             
             <div class="form-group">
+                <label for="splitUpiSelector">Select UPI Profile *</label>
+                <select id="splitUpiSelector" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white; cursor: pointer;" onchange="selectSplitProfile()">
+                    <option value="">Choose a profile...</option>
+                </select>
+                <div id="splitSelectedProfile" style="display: none; margin-top: 8px; padding: 12px; background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); border-radius: 8px; border-left: 4px solid #667eea;">
+                    <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;" id="splitProfileName"></div>
+                    <div style="color: #667eea; font-size: 0.9rem;" id="splitProfileUpi"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
                 <label for="totalBillAmount">Total Bill Amount (₹) *</label>
                 <input type="number" id="totalBillAmount" placeholder="3000" step="0.01" min="0.01" oninput="updateGroupSplit()">
             </div>
@@ -2641,14 +2652,52 @@
         let splitMode = 'equal'; // 'equal' or 'custom'
         let generatedGroupQRs = [];
         
+        let splitSelectedProfile = null;
+        
         function openSplitCalculator() {
-            if (!currentProfile) {
-                alert('⚠️ Please select a UPI profile first to use Bill Split feature');
+            const selector = document.getElementById('splitUpiSelector');
+            selector.innerHTML = '<option value="">Choose a profile...</option>';
+            
+            upiProfiles.forEach((profile, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${profile.name} (${profile.upiId})`;
+                selector.appendChild(option);
+            });
+            
+            if (upiProfiles.length === 0) {
+                alert('⚠️ Please add a UPI profile first');
                 return;
             }
+            
+            // Auto-select current profile if available
+            if (currentProfile) {
+                const currentIndex = upiProfiles.findIndex(p => p.upiId === currentProfile.upiId);
+                if (currentIndex !== -1) {
+                    selector.value = currentIndex;
+                    selectSplitProfile();
+                }
+            }
+            
             document.getElementById('splitCalculatorModal').classList.add('active');
             switchSplitMode('equal');
             updateGroupSplit();
+        }
+        
+        function selectSplitProfile() {
+            const selector = document.getElementById('splitUpiSelector');
+            const selectedIndex = selector.value;
+            
+            if (selectedIndex === '') {
+                splitSelectedProfile = null;
+                document.getElementById('splitSelectedProfile').style.display = 'none';
+                return;
+            }
+            
+            splitSelectedProfile = upiProfiles[parseInt(selectedIndex)];
+            document.getElementById('splitProfileName').textContent = splitSelectedProfile.name;
+            document.getElementById('splitProfileUpi').textContent = splitSelectedProfile.upiId;
+            document.getElementById('splitSelectedProfile').style.display = 'block';
         }
         
         function closeSplitCalculator() {
@@ -2761,8 +2810,8 @@
         }
         
         async function generateGroupQRs() {
-            if (!currentProfile) {
-                alert('⚠️ Please select a profile first');
+            if (!splitSelectedProfile) {
+                alert('⚠️ Please select a UPI profile from the dropdown');
                 return;
             }
             
@@ -2821,8 +2870,8 @@
         }
         
         async function generateMemberQR(name, amount) {
-            const note = `Payment to ${currentProfile.name} - Split bill for ${name}`;
-            const upiString = `upi://pay?pa=${currentProfile.upiId}&pn=${encodeURIComponent(currentProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+            const note = `Payment to ${splitSelectedProfile.name} - Split bill for ${name}`;
+            const upiString = `upi://pay?pa=${splitSelectedProfile.upiId}&pn=${encodeURIComponent(splitSelectedProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
             
             // Create QR code canvas
             const container = document.createElement('div');
@@ -2881,7 +2930,7 @@
         
         async function shareIndividualQR(index) {
             const member = generatedGroupQRs[index];
-            const message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${currentProfile.name}\n🆔 UPI: ${currentProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
+            const message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
             
             // Convert base64 to blob
             const response = await fetch(member.qrImage);
