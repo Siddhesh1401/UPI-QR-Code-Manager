@@ -1812,6 +1812,10 @@
                 <button class="close-btn" onclick="closeSplitCalculator()">&times;</button>
             </div>
             
+            <button onclick="openSplitHistory()" style="width: 100%; padding: 12px; margin-bottom: 16px; background: linear-gradient(135deg, #f59e0b20 0%, #f59e0b40 100%); border: 2px solid #f59e0b; color: #d97706; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                📜 View Split History
+            </button>
+            
             <div class="form-group">
                 <label for="splitUpiSelector">Select UPI Profile *</label>
                 <select id="splitUpiSelector" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white; cursor: pointer;" onchange="selectSplitProfile()">
@@ -1913,6 +1917,30 @@
                     📤 Share All QRs
                 </button>
                 <button class="btn btn-secondary" onclick="closeGroupQRModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split History Modal -->
+    <div id="splitHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>📜 Split History</h2>
+                <button class="close-btn" onclick="closeSplitHistory()">&times;</button>
+            </div>
+            
+            <div id="splitHistoryList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <!-- History items will be added here -->
+            </div>
+            
+            <div id="emptyHistory" style="text-align: center; padding: 40px 20px; color: #94a3b8; display: none;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">📋</div>
+                <p style="font-size: 1.1rem; margin: 0;">No split history yet</p>
+                <p style="font-size: 0.9rem; margin-top: 8px;">Your bill splits will appear here</p>
+            </div>
+            
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeSplitHistory()">Close</button>
             </div>
         </div>
     </div>
@@ -2651,8 +2679,53 @@
         let groupMembers = [];
         let splitMode = 'equal'; // 'equal' or 'custom'
         let generatedGroupQRs = [];
-        
         let splitSelectedProfile = null;
+        
+        // Split History Management
+        function getSplitHistory() {
+            const history = localStorage.getItem('splitHistory');
+            return history ? JSON.parse(history) : [];
+        }
+        
+        function saveSplitToHistory(splitData) {
+            const history = getSplitHistory();
+            
+            const historyEntry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                profile: {
+                    name: splitSelectedProfile.name,
+                    upiId: splitSelectedProfile.upiId
+                },
+                totalAmount: splitData.totalAmount,
+                splitMode: splitData.splitMode,
+                members: splitData.members,
+                numPeople: splitData.numPeople || null
+            };
+            
+            history.unshift(historyEntry); // Add to beginning
+            
+            // Keep only last 50 splits
+            if (history.length > 50) {
+                history.pop();
+            }
+            
+            localStorage.setItem('splitHistory', JSON.stringify(history));
+        }
+        
+        function deleteSplitFromHistory(id) {
+            let history = getSplitHistory();
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('splitHistory', JSON.stringify(history));
+            openSplitHistory();
+        }
+        
+        function clearAllHistory() {
+            if (confirm('🗑️ Clear all split history?\n\nThis cannot be undone.')) {
+                localStorage.removeItem('splitHistory');
+                openSplitHistory();
+            }
+        }
         
         function openSplitCalculator() {
             const selector = document.getElementById('splitUpiSelector');
@@ -2866,6 +2939,15 @@
                 });
             }
             
+            // Save to history
+            const historyData = {
+                totalAmount: totalBill,
+                splitMode: splitMode,
+                members: splitMode === 'custom' ? members.map(m => ({ name: m.name, amount: m.amount })) : [],
+                numPeople: splitMode === 'equal' ? parseInt(document.getElementById('numberOfPeople').value) : null
+            };
+            saveSplitToHistory(historyData);
+            
             // Show results modal
             closeSplitCalculator();
             showGroupQRResults();
@@ -2937,6 +3019,124 @@
         function togglePaidStatus(index) {
             generatedGroupQRs[index].paid = !generatedGroupQRs[index].paid;
             showGroupQRResults();
+        }
+        
+        function openSplitHistory() {
+            const history = getSplitHistory();
+            const container = document.getElementById('splitHistoryList');
+            const emptyState = document.getElementById('emptyHistory');
+            
+            container.innerHTML = '';
+            
+            if (history.length === 0) {
+                emptyState.style.display = 'block';
+                container.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                container.style.display = 'flex';
+                
+                history.forEach(item => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px;';
+                    
+                    let membersInfo = '';
+                    if (item.splitMode === 'equal') {
+                        const perPerson = (item.totalAmount / item.numPeople).toFixed(2);
+                        membersInfo = `<div style="color: #48bb78; font-size: 0.9rem; margin-top: 8px;">⚖️ Equal: ${item.numPeople} people × ₹${perPerson}</div>`;
+                    } else {
+                        membersInfo = '<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">';
+                        item.members.forEach(member => {
+                            membersInfo += `<span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; color: #475569;">${member.name}: ₹${member.amount}</span>`;
+                        });
+                        membersInfo += '</div>';
+                    }
+                    
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div>
+                                <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${item.profile.name}</div>
+                                <div style="color: #64748b; font-size: 0.85rem;">${item.profile.upiId}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #667eea; font-weight: 700; font-size: 1.2rem;">₹${item.totalAmount.toFixed(2)}</div>
+                                <div style="color: #94a3b8; font-size: 0.75rem;">${dateStr} ${timeStr}</div>
+                            </div>
+                        </div>
+                        ${membersInfo}
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button onclick="reuseSplit(${item.id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">🔄 Reuse</button>
+                            <button onclick="deleteSplitFromHistory(${item.id})" style="padding: 10px 16px; background: #fee; color: #dc2626; border: 2px solid #fecaca; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">🗑️</button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
+                
+                // Add clear all button at bottom
+                const clearBtn = document.createElement('button');
+                clearBtn.textContent = '🗑️ Clear All History';
+                clearBtn.style.cssText = 'width: 100%; padding: 12px; background: #fee; color: #dc2626; border: 2px solid #fecaca; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 8px;';
+                clearBtn.onclick = clearAllHistory;
+                container.appendChild(clearBtn);
+            }
+            
+            document.getElementById('splitHistoryModal').classList.add('active');
+        }
+        
+        function closeSplitHistory() {
+            document.getElementById('splitHistoryModal').classList.remove('active');
+        }
+        
+        function reuseSplit(id) {
+            const history = getSplitHistory();
+            const split = history.find(item => item.id === id);
+            
+            if (!split) {
+                alert('⚠️ Split not found in history');
+                return;
+            }
+            
+            // Close history modal
+            closeSplitHistory();
+            
+            // Open split calculator
+            openSplitCalculator();
+            
+            // Find and select the profile
+            const profileIndex = upiProfiles.findIndex(p => p.upiId === split.profile.upiId);
+            if (profileIndex !== -1) {
+                document.getElementById('splitUpiSelector').value = profileIndex;
+                selectSplitProfile();
+            } else {
+                alert('⚠️ Profile not found. Please select a profile manually.');
+            }
+            
+            // Set total amount
+            document.getElementById('totalBillAmount').value = split.totalAmount;
+            
+            // Switch to appropriate mode and populate data
+            if (split.splitMode === 'equal') {
+                switchSplitMode('equal');
+                document.getElementById('numberOfPeople').value = split.numPeople;
+                updateGroupSplit();
+            } else {
+                switchSplitMode('custom');
+                groupMembers = [];
+                split.members.forEach(member => {
+                    const memberId = Date.now() + Math.random();
+                    groupMembers.push({
+                        id: memberId,
+                        name: member.name,
+                        amount: parseFloat(member.amount),
+                        paid: false
+                    });
+                });
+                renderGroupMembers();
+            }
         }
         
         async function shareIndividualQR(index) {
