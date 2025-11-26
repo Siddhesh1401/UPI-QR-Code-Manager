@@ -1806,36 +1806,102 @@
 
     <!-- Split Payment Calculator Modal -->
     <div id="splitCalculatorModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <h2>🧮 Split Bill Calculator</h2>
+                <h2>👥 Split Bill with Groups</h2>
                 <button class="close-btn" onclick="closeSplitCalculator()">&times;</button>
             </div>
             
             <div class="form-group">
-                <label for="totalBillAmount">Total Bill Amount (₹)</label>
-                <input type="number" id="totalBillAmount" placeholder="1000" step="0.01" min="0.01" oninput="calculateSplit()">
+                <label for="totalBillAmount">Total Bill Amount (₹) *</label>
+                <input type="number" id="totalBillAmount" placeholder="3000" step="0.01" min="0.01" oninput="updateGroupSplit()">
             </div>
             
-            <div class="form-group">
-                <label for="numberOfPeople">Number of People</label>
-                <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
-                    <button type="button" onclick="adjustPeople(-1)" style="min-width: 50px; min-height: 50px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">−</button>
-                    <input type="number" id="numberOfPeople" value="2" min="2" max="50" style="text-align: center; font-size: 1.5rem; font-weight: bold; min-width: 80px;" oninput="calculateSplit()" readonly>
-                    <button type="button" onclick="adjustPeople(1)" style="min-width: 50px; min-height: 50px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">+</button>
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button type="button" onclick="switchSplitMode('equal')" id="equalSplitBtn" class="btn" style="flex: 1; padding: 10px; background: #667eea; color: white; border: 2px solid #667eea;">
+                    ⚖️ Equal Split
+                </button>
+                <button type="button" onclick="switchSplitMode('custom')" id="customSplitBtn" class="btn" style="flex: 1; padding: 10px; background: white; color: #667eea; border: 2px solid #667eea;">
+                    ✏️ Custom Split
+                </button>
+            </div>
+            
+            <!-- Equal Split Mode -->
+            <div id="equalSplitMode" style="display: block;">
+                <div class="form-group">
+                    <label for="numberOfPeople">Number of People</label>
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                        <button type="button" onclick="adjustPeople(-1)" style="min-width: 50px; min-height: 50px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.5rem; cursor: pointer;">−</button>
+                        <input type="number" id="numberOfPeople" value="2" min="2" max="20" style="text-align: center; font-size: 1.5rem; font-weight: bold; min-width: 80px;" oninput="updateGroupSplit()" readonly>
+                        <button type="button" onclick="adjustPeople(1)" style="min-width: 50px; min-height: 50px; border-radius: 50%; background: #e2e8f0; border: none; font-size: 1.5rem; cursor: pointer;">+</button>
+                    </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <div style="text-align: center;">
+                        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">Each Person Pays</p>
+                        <p id="splitResult" style="font-size: 2.5rem; font-weight: bold; color: #667eea; margin: 0;">₹0</p>
+                    </div>
                 </div>
             </div>
             
-            <div style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 20px; border-radius: 12px; margin: 20px 0;">
-                <div style="text-align: center;">
-                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">Each Person Pays</p>
-                    <p id="splitResult" style="font-size: 2.5rem; font-weight: bold; color: #667eea; margin: 0;">₹0</p>
+            <!-- Custom Split Mode -->
+            <div id="customSplitMode" style="display: none;">
+                <div class="form-group">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Group Members</span>
+                        <button type="button" onclick="addGroupMember()" style="padding: 8px 16px; background: #48bb78; color: white; border: none; border-radius: 8px; font-size: 0.85rem; cursor: pointer;">
+                            + Add Person
+                        </button>
+                    </label>
+                    
+                    <div id="groupMembersList" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Members will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #64748b; font-size: 0.9rem;">Total Bill:</span>
+                        <span id="customTotalDisplay" style="font-weight: 600; color: #1e293b;">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #64748b; font-size: 0.9rem;">Total Assigned:</span>
+                        <span id="customAssignedDisplay" style="font-weight: 600; color: #667eea;">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 2px dashed #e2e8f0;">
+                        <span style="color: #64748b; font-size: 0.9rem; font-weight: 600;">Remaining:</span>
+                        <span id="customRemainingDisplay" style="font-weight: 700; font-size: 1.1rem; color: #ef4444;">₹0</span>
+                    </div>
                 </div>
             </div>
             
-            <div class="modal-buttons">
+            <div class="modal-buttons" style="margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="closeSplitCalculator()">Cancel</button>
-                <button class="btn btn-primary" onclick="useSplitAmount()">Use This Amount</button>
+                <button class="btn" onclick="generateGroupQRs()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; flex: 1;">
+                    🎯 Generate QRs for All
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Group QR Results Modal -->
+    <div id="groupQRModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>✅ Group QR Codes Generated</h2>
+                <button class="close-btn" onclick="closeGroupQRModal()">&times;</button>
+            </div>
+            
+            <div id="groupQRList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <!-- Group QR cards will be added here -->
+            </div>
+            
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="btn" onclick="shareAllGroupQRs()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    📤 Share All QRs
+                </button>
+                <button class="btn btn-secondary" onclick="closeGroupQRModal()">Done</button>
             </div>
         </div>
     </div>
@@ -2570,25 +2636,64 @@
         }
         
         // Split Payment Calculator Functions
+        // Group Split Variables
+        let groupMembers = [];
+        let splitMode = 'equal'; // 'equal' or 'custom'
+        let generatedGroupQRs = [];
+        
         function openSplitCalculator() {
             document.getElementById('splitCalculatorModal').classList.add('active');
-            calculateSplit();
+            switchSplitMode('equal');
+            updateGroupSplit();
         }
         
         function closeSplitCalculator() {
             document.getElementById('splitCalculatorModal').classList.remove('active');
+            groupMembers = [];
+        }
+        
+        function switchSplitMode(mode) {
+            splitMode = mode;
+            
+            const equalBtn = document.getElementById('equalSplitBtn');
+            const customBtn = document.getElementById('customSplitBtn');
+            const equalMode = document.getElementById('equalSplitMode');
+            const customMode = document.getElementById('customSplitMode');
+            
+            if (mode === 'equal') {
+                equalBtn.style.background = '#667eea';
+                equalBtn.style.color = 'white';
+                customBtn.style.background = 'white';
+                customBtn.style.color = '#667eea';
+                equalMode.style.display = 'block';
+                customMode.style.display = 'none';
+            } else {
+                equalBtn.style.background = 'white';
+                equalBtn.style.color = '#667eea';
+                customBtn.style.background = '#667eea';
+                customBtn.style.color = 'white';
+                equalMode.style.display = 'none';
+                customMode.style.display = 'block';
+                
+                // Initialize with 2 members if empty
+                if (groupMembers.length === 0) {
+                    addGroupMember();
+                    addGroupMember();
+                }
+                updateCustomSplit();
+            }
         }
         
         function adjustPeople(delta) {
             const input = document.getElementById('numberOfPeople');
             let value = parseInt(input.value) + delta;
             if (value < 2) value = 2;
-            if (value > 50) value = 50;
+            if (value > 20) value = 20;
             input.value = value;
-            calculateSplit();
+            updateGroupSplit();
         }
         
-        function calculateSplit() {
+        function updateGroupSplit() {
             const totalAmount = parseFloat(document.getElementById('totalBillAmount').value) || 0;
             const numberOfPeople = parseInt(document.getElementById('numberOfPeople').value) || 2;
             
@@ -2596,11 +2701,218 @@
             document.getElementById('splitResult').textContent = `₹${splitAmount.toFixed(2)}`;
         }
         
-        function useSplitAmount() {
-            const splitAmount = parseFloat(document.getElementById('splitResult').textContent.replace('₹', ''));
-            document.getElementById('paymentAmount').value = splitAmount.toFixed(2);
+        function addGroupMember() {
+            const memberId = Date.now();
+            groupMembers.push({ id: memberId, name: '', amount: 0, paid: false });
+            renderGroupMembers();
+        }
+        
+        function removeGroupMember(id) {
+            groupMembers = groupMembers.filter(m => m.id !== id);
+            renderGroupMembers();
+            updateCustomSplit();
+        }
+        
+        function renderGroupMembers() {
+            const container = document.getElementById('groupMembersList');
+            container.innerHTML = '';
+            
+            groupMembers.forEach((member, index) => {
+                const memberDiv = document.createElement('div');
+                memberDiv.style.cssText = 'display: flex; gap: 8px; align-items: center; background: white; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0;';
+                
+                memberDiv.innerHTML = `
+                    <span style="min-width: 24px; height: 24px; background: #667eea; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600;">${index + 1}</span>
+                    <input type="text" placeholder="Name" value="${member.name}" onchange="updateMemberName(${member.id}, this.value)" style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;">
+                    <input type="number" placeholder="₹ Amount" value="${member.amount || ''}" onchange="updateMemberAmount(${member.id}, this.value)" step="0.01" min="0" style="width: 100px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;">
+                    <button onclick="removeGroupMember(${member.id})" style="padding: 8px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">✕</button>
+                `;
+                
+                container.appendChild(memberDiv);
+            });
+            
+            updateCustomSplit();
+        }
+        
+        function updateMemberName(id, name) {
+            const member = groupMembers.find(m => m.id === id);
+            if (member) member.name = name;
+        }
+        
+        function updateMemberAmount(id, amount) {
+            const member = groupMembers.find(m => m.id === id);
+            if (member) member.amount = parseFloat(amount) || 0;
+            updateCustomSplit();
+        }
+        
+        function updateCustomSplit() {
+            const totalBill = parseFloat(document.getElementById('totalBillAmount').value) || 0;
+            const assignedTotal = groupMembers.reduce((sum, m) => sum + (m.amount || 0), 0);
+            const remaining = totalBill - assignedTotal;
+            
+            document.getElementById('customTotalDisplay').textContent = `₹${totalBill.toFixed(2)}`;
+            document.getElementById('customAssignedDisplay').textContent = `₹${assignedTotal.toFixed(2)}`;
+            document.getElementById('customRemainingDisplay').textContent = `₹${remaining.toFixed(2)}`;
+            document.getElementById('customRemainingDisplay').style.color = remaining === 0 ? '#48bb78' : '#ef4444';
+        }
+        
+        async function generateGroupQRs() {
+            if (!currentProfile) {
+                alert('⚠️ Please select a profile first');
+                return;
+            }
+            
+            const totalBill = parseFloat(document.getElementById('totalBillAmount').value);
+            if (!totalBill || totalBill <= 0) {
+                alert('⚠️ Please enter a valid bill amount');
+                return;
+            }
+            
+            let members = [];
+            
+            if (splitMode === 'equal') {
+                const numPeople = parseInt(document.getElementById('numberOfPeople').value);
+                const splitAmount = totalBill / numPeople;
+                
+                for (let i = 1; i <= numPeople; i++) {
+                    members.push({
+                        name: `Person ${i}`,
+                        amount: splitAmount.toFixed(2),
+                        paid: false
+                    });
+                }
+            } else {
+                const assignedTotal = groupMembers.reduce((sum, m) => sum + (m.amount || 0), 0);
+                if (Math.abs(assignedTotal - totalBill) > 0.01) {
+                    alert('⚠️ Total assigned amount must equal the bill amount!\n\nAssigned: ₹' + assignedTotal.toFixed(2) + '\nBill: ₹' + totalBill.toFixed(2));
+                    return;
+                }
+                
+                members = groupMembers.filter(m => m.name && m.amount > 0).map(m => ({
+                    name: m.name,
+                    amount: m.amount.toFixed(2),
+                    paid: false
+                }));
+                
+                if (members.length === 0) {
+                    alert('⚠️ Please add at least one person with name and amount');
+                    return;
+                }
+            }
+            
+            // Generate QR codes for each member
+            generatedGroupQRs = [];
+            
+            for (const member of members) {
+                const qrData = await generateMemberQR(member.name, member.amount);
+                generatedGroupQRs.push({
+                    ...member,
+                    qrImage: qrData
+                });
+            }
+            
+            // Show results modal
             closeSplitCalculator();
-            alert(`✅ Amount set to ₹${splitAmount.toFixed(2)} per person`);
+            showGroupQRResults();
+        }
+        
+        async function generateMemberQR(name, amount) {
+            const note = `Payment to ${currentProfile.name} - Split bill for ${name}`;
+            const upiString = `upi://pay?pa=${currentProfile.upiId}&pn=${encodeURIComponent(currentProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+            
+            // Create QR code canvas
+            const container = document.createElement('div');
+            const qr = new QRCode(container, {
+                text: upiString,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Wait for QR generation and get image
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const img = container.querySelector('img');
+            return img ? img.src : null;
+        }
+        
+        function showGroupQRResults() {
+            const container = document.getElementById('groupQRList');
+            container.innerHTML = '';
+            
+            generatedGroupQRs.forEach((member, index) => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;';
+                
+                card.innerHTML = `
+                    <img src="${member.qrImage}" style="width: 80px; height: 80px; border-radius: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 1.1rem; color: #1e293b; margin-bottom: 4px;">${member.name}</div>
+                        <div style="color: #667eea; font-weight: 700; font-size: 1.3rem;">₹${member.amount}</div>
+                        <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">
+                            ${member.paid ? '<span style="color: #48bb78;">✅ Paid</span>' : '<span style="color: #f59e0b;">⏳ Pending</span>'}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button onclick="shareIndividualQR(${index})" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">📤 Share</button>
+                        <button onclick="togglePaidStatus(${index})" style="padding: 8px 12px; background: ${member.paid ? '#ef4444' : '#48bb78'}; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">${member.paid ? '❌ Unpay' : '✅ Mark Paid'}</button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            document.getElementById('groupQRModal').classList.add('active');
+        }
+        
+        function closeGroupQRModal() {
+            document.getElementById('groupQRModal').classList.remove('active');
+        }
+        
+        function togglePaidStatus(index) {
+            generatedGroupQRs[index].paid = !generatedGroupQRs[index].paid;
+            showGroupQRResults();
+        }
+        
+        async function shareIndividualQR(index) {
+            const member = generatedGroupQRs[index];
+            const message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${currentProfile.name}\n🆔 UPI: ${currentProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
+            
+            // Convert base64 to blob
+            const response = await fetch(member.qrImage);
+            const blob = await response.blob();
+            const file = new File([blob], `split-payment-${member.name}.png`, { type: 'image/png' });
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: `Payment Request - ${member.name}`,
+                        text: message
+                    });
+                } catch (err) {
+                    console.log('Share cancelled or failed:', err);
+                }
+            } else {
+                // Fallback - download
+                const link = document.createElement('a');
+                link.href = member.qrImage;
+                link.download = `split-payment-${member.name}.png`;
+                link.click();
+                alert('✅ QR downloaded!\n\nShare this message:\n' + message);
+            }
+        }
+        
+        async function shareAllGroupQRs() {
+            alert('📤 Sharing all ' + generatedGroupQRs.length + ' QR codes...\n\nYou\'ll be prompted to share each one.');
+            
+            for (let i = 0; i < generatedGroupQRs.length; i++) {
+                await shareIndividualQR(i);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            alert('✅ All QR codes shared!');
         }
         
         // QR Card Template Renderer
