@@ -1658,19 +1658,6 @@
                         🧮 Split Bill Calculator
                     </button>
                 </div>
-                
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="enablePassword" onchange="togglePasswordProtection()" style="width: 20px; height: 20px; cursor: pointer;">
-                        <span>🔒 Password Protect this QR</span>
-                    </label>
-                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Recipient will need password to view payment details</p>
-                    
-                    <div id="passwordSection" style="display: none; margin-top: 12px;">
-                        <input type="password" id="qrPassword" placeholder="Enter 4-8 digit password" maxlength="8" minlength="4" pattern="[0-9]{4,8}" inputmode="numeric" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
-                        <p style="color: #64748b; font-size: 0.8rem; margin-top: 6px;">⚠️ Remember this password - you'll need to share it separately</p>
-                    </div>
-                </div>
 
                 <button type="submit" class="btn btn-primary">Generate QR Code</button>
             </form>
@@ -1709,33 +1696,6 @@
         </div>
     </div>
 
-    <!-- Password Verification Modal -->
-    <div id="passwordVerifyModal" class="modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <button class="close-btn" onclick="closePasswordVerify()" style="position: absolute; right: 20px; top: 20px;">&times;</button>
-            
-            <div style="margin: 30px 0;">
-                <div style="font-size: 60px; margin-bottom: 20px;">🔒</div>
-                <h2 style="margin-bottom: 10px;">Password Protected</h2>
-                <p style="color: #64748b; margin-bottom: 20px;">This payment QR is password protected.<br>Enter password to view details.</p>
-                
-                <div id="protectedQRInfo" style="background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #64748b;">
-                    Pay to: <span id="protectedName" style="color: #1e293b; font-weight: 600;"></span>
-                </div>
-                
-                <input type="password" id="verifyPassword" placeholder="Enter password" maxlength="8" inputmode="numeric" style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1.1rem; text-align: center; margin-bottom: 16px;">
-                
-                <button onclick="verifyQRPassword()" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1rem;">
-                    ✔️ Unlock & View QR
-                </button>
-                
-                <div id="passwordError" style="color: #ef4444; margin-top: 12px; display: none; font-weight: 600;">
-                    ❌ Incorrect password. Try again.
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
@@ -3295,179 +3255,12 @@
         // QR Code Generation
         // Store current QR info globally
         let currentQRInfo = null;
-        let protectedQRData = null; // Store password-protected QR data
-        
-        // Password Protection Functions
-        function togglePasswordProtection() {
-            const checkbox = document.getElementById('enablePassword');
-            const section = document.getElementById('passwordSection');
-            const passwordInput = document.getElementById('qrPassword');
-            
-            if (checkbox.checked) {
-                section.style.display = 'block';
-                passwordInput.required = true;
-            } else {
-                section.style.display = 'none';
-                passwordInput.required = false;
-                passwordInput.value = '';
-            }
-        }
-        
-        // Simple encryption (Base64 + password hash)
-        function encryptData(data, password) {
-            const dataStr = JSON.stringify(data);
-            const encoded = btoa(dataStr); // Base64 encode
-            const passwordHash = btoa(password); // Hash password
-            return { encrypted: encoded, hash: passwordHash };
-        }
-        
-        function decryptData(encrypted, password) {
-            try {
-                const decoded = atob(encrypted);
-                return JSON.parse(decoded);
-            } catch (e) {
-                return null;
-            }
-        }
-        
-        function verifyPassword(inputPassword, storedHash) {
-            return btoa(inputPassword) === storedHash;
-        }
-        
-        function openPasswordVerify() {
-            if (!protectedQRData) {
-                alert('⚠️ No protected QR code found');
-                return;
-            }
-            
-            document.getElementById('protectedName').textContent = protectedQRData.name;
-            document.getElementById('verifyPassword').value = '';
-            document.getElementById('passwordError').style.display = 'none';
-            document.getElementById('passwordVerifyModal').classList.add('active');
-        }
-        
-        function closePasswordVerify() {
-            document.getElementById('passwordVerifyModal').classList.remove('active');
-        }
-        
-        function verifyQRPassword() {
-            const inputPassword = document.getElementById('verifyPassword').value;
-            const errorDiv = document.getElementById('passwordError');
-            
-            if (!inputPassword) {
-                errorDiv.textContent = '⚠️ Please enter password';
-                errorDiv.style.display = 'block';
-                return;
-            }
-            
-            if (verifyPassword(inputPassword, protectedQRData.passwordHash)) {
-                // Password correct - show QR
-                errorDiv.style.display = 'none';
-                closePasswordVerify();
-                
-                // Decrypt and show QR
-                const decryptedData = decryptData(protectedQRData.encrypted, inputPassword);
-                if (decryptedData) {
-                    currentQRInfo = decryptedData;
-                    showUnlockedQR(decryptedData);
-                }
-            } else {
-                // Password incorrect
-                errorDiv.textContent = '❌ Incorrect password. Try again.';
-                errorDiv.style.display = 'block';
-                document.getElementById('verifyPassword').value = '';
-                document.getElementById('verifyPassword').focus();
-            }
-        }
-        
-        function showUnlockedQR(data) {
-            const note = `Payment to ${data.name}`;
-            const upiString = `upi://pay?pa=${data.upiId}&pn=${encodeURIComponent(data.name)}&am=${data.amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-            
-            // Generate in hidden container
-            const container = document.getElementById('qrcode-container');
-            container.innerHTML = '';
-            container.style.display = 'flex';
-            
-            new QRCode(container, {
-                text: upiString,
-                width: 256,
-                height: 256,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Show in display modal
-            setTimeout(() => {
-                const displayQR = document.getElementById('qrDisplayQR');
-                displayQR.innerHTML = '';
-                
-                new QRCode(displayQR, {
-                    text: upiString,
-                    width: 280,
-                    height: 280,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                
-                document.getElementById('qrDisplayName').textContent = data.name;
-                document.getElementById('qrDisplayUPI').textContent = data.upiId;
-                document.getElementById('qrDisplayAmount').textContent = `₹${data.amount}`;
-                
-                document.getElementById('qrDisplayModal').classList.add('active');
-                
-                // Show unlock success message
-                setTimeout(() => {
-                    alert('🔓 QR Code Unlocked!\n\nYou can now view and share the payment details.');
-                }, 300);
-            }, 100);
-        }
 
         function generateQR() {
             const amount = document.getElementById('paymentAmount').value.trim();
 
             if (!amount || amount <= 0) {
                 alert('⚠️ Please enter a valid amount');
-                return;
-            }
-            
-            // Check if password protection is enabled
-            const isPasswordEnabled = document.getElementById('enablePassword').checked;
-            const password = document.getElementById('qrPassword').value;
-            
-            if (isPasswordEnabled) {
-                if (!password || password.length < 4) {
-                    alert('⚠️ Please enter a password (4-8 digits)');
-                    document.getElementById('qrPassword').focus();
-                    return;
-                }
-                
-                // Store encrypted data
-                const qrData = {
-                    name: currentProfile.name,
-                    upiId: currentProfile.upiId,
-                    amount: amount
-                };
-                
-                const encrypted = encryptData(qrData, password);
-                protectedQRData = {
-                    name: currentProfile.name,
-                    encrypted: encrypted.encrypted,
-                    passwordHash: encrypted.hash,
-                    isProtected: true
-                };
-                
-                // Clear the form
-                closePaymentModal();
-                
-                // Show password verification modal
-                setTimeout(() => {
-                    alert('🔒 Password Protected QR Created!\n\n✅ QR is now locked\n📤 Share it safely\n🔑 Share password separately\n\nNow enter the password to view your QR.');
-                    openPasswordVerify();
-                }, 200);
-                
                 return;
             }
 
