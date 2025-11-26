@@ -2948,7 +2948,13 @@
         
         // URL shortening function using multiple services with fallback
         async function shortenUrl(longUrl) {
-            // Try is.gd first
+            // UPI links cannot be shortened, return as-is
+            if (longUrl.startsWith('upi://')) {
+                console.log('UPI protocol link - using original URL');
+                return longUrl;
+            }
+            
+            // Try is.gd first for http/https URLs
             try {
                 const response = await fetch(`https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`);
                 if (response.ok) {
@@ -3059,199 +3065,127 @@
                     ctx.closePath();
                 }
                 
-                // Draw outer border with gold gradient
-                const outerBorder = 8;
+                // Draw main card background with clean gradient
+                const outerBorder = 0;
                 roundRect(0, 0, cardWidth, cardHeight, borderRadius);
-                const borderGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
-                borderGradient.addColorStop(0, '#FFD700');
-                borderGradient.addColorStop(0.5, '#FFA500');
-                borderGradient.addColorStop(1, '#FFD700');
-                ctx.fillStyle = borderGradient;
-                ctx.fill();
-                
-                // Draw main card background
-                roundRect(outerBorder, outerBorder, cardWidth - outerBorder * 2, cardHeight - outerBorder * 2, borderRadius - 4);
                 const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
-                bgGradient.addColorStop(0, '#1a1a2e');
-                bgGradient.addColorStop(0.5, '#16213e');
-                bgGradient.addColorStop(1, '#0f3460');
+                bgGradient.addColorStop(0, '#667eea');
+                bgGradient.addColorStop(0.5, '#764ba2');
+                bgGradient.addColorStop(1, '#5b4a9f');
                 ctx.fillStyle = bgGradient;
                 ctx.fill();
                 
-                // Draw decorative corner patterns
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(outerBorder + 30, outerBorder + 30, 15 + i * 8, Math.PI, Math.PI * 1.5);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(cardWidth - outerBorder - 30, outerBorder + 30, 15 + i * 8, Math.PI * 1.5, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(outerBorder + 30, cardHeight - outerBorder - 30, 15 + i * 8, Math.PI * 0.5, Math.PI);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(cardWidth - outerBorder - 30, cardHeight - outerBorder - 30, 15 + i * 8, 0, Math.PI * 0.5);
-                    ctx.stroke();
-                }
-                
-                // Diamond pattern background
-                ctx.globalAlpha = 0.05;
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 1;
-                for (let x = 0; x < cardWidth; x += 40) {
-                    for (let y = 0; y < cardHeight; y += 40) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, y + 10);
-                        ctx.lineTo(x + 10, y);
-                        ctx.lineTo(x + 20, y + 10);
-                        ctx.lineTo(x + 10, y + 20);
-                        ctx.closePath();
-                        ctx.stroke();
-                    }
-                }
+                // Draw subtle decorative circles
+                ctx.globalAlpha = 0.1;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(80, 80, 120, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cardWidth - 80, cardHeight - 80, 140, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.globalAlpha = 1;
                 
-                const headerPadding = 30;
-                const headerY = 25;
-                roundRect(headerPadding - 2, headerY - 2, cardWidth - headerPadding * 2 + 4, 104, 18);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fill();
-                roundRect(headerPadding, headerY, cardWidth - headerPadding * 2, 100, 16);
-                const headerGradient = ctx.createLinearGradient(0, headerY, 0, headerY + 100);
-                headerGradient.addColorStop(0, '#ffffff');
-                headerGradient.addColorStop(1, '#f8f9fa');
-                ctx.fillStyle = headerGradient;
+                // Draw header section
+                const headerPadding = 28;
+                const headerY = 28;
+                
+                // Header with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 8;
+                
+                roundRect(headerPadding, headerY, cardWidth - headerPadding * 2, 95, 18);
+                ctx.fillStyle = 'white';
                 ctx.fill();
                 
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(headerPadding + 40, headerY + 50);
-                ctx.lineTo(cardWidth - headerPadding - 40, headerY + 50);
-                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
                 
-                ctx.fillStyle = '#1a1a2e';
+                // Header text
+                ctx.fillStyle = '#1e293b';
                 ctx.font = 'bold 28px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerY + 38);
-                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerY + 40);
+                ctx.font = '15px Inter, sans-serif';
                 ctx.fillStyle = '#667eea';
-                ctx.fillText('✦ Scan to Pay Instantly ✦', cardWidth / 2, headerY + 75);
+                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerY + 70);
                 
-                const qrY = 155;
-                const qrX = (cardWidth - qrSize - 48) / 2;
+                // Draw QR container
+                const qrY = 150;
+                const qrX = (cardWidth - qrSize - 44) / 2;
                 
-                ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
-                ctx.shadowBlur = 15;
-                roundRect(qrX - 4, qrY - 4, qrSize + 56, qrSize + 56, 22);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
-                ctx.fill();
-                
+                // QR white container with shadow
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-                ctx.shadowBlur = 20;
-                ctx.shadowOffsetY = 10;
-                roundRect(qrX, qrY, qrSize + 48, qrSize + 48, 20);
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetY = 12;
+                
+                roundRect(qrX, qrY, qrSize + 44, qrSize + 44, 20);
                 ctx.fillStyle = '#ffffff';
                 ctx.fill();
                 
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
-                ctx.strokeStyle = '#667eea';
-                ctx.lineWidth = 3;
-                const cornerSize = 20;
-                ctx.beginPath();
-                ctx.moveTo(qrX + 15, qrY + 15 + cornerSize);
-                ctx.lineTo(qrX + 15, qrY + 15);
-                ctx.lineTo(qrX + 15 + cornerSize, qrY + 15);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(qrX + qrSize + 48 - 15 - cornerSize, qrY + 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + 15 + cornerSize);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(qrX + 15, qrY + qrSize + 48 - 15 - cornerSize);
-                ctx.lineTo(qrX + 15, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + 15 + cornerSize, qrY + qrSize + 48 - 15);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(qrX + qrSize + 48 - 15 - cornerSize, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + qrSize + 48 - 15 - cornerSize);
-                ctx.stroke();
                 
                 if (canvas) {
-                    ctx.drawImage(canvas, qrX + 24, qrY + 24, qrSize, qrSize);
+                    ctx.drawImage(canvas, qrX + 22, qrY + 22, qrSize, qrSize);
                 } else if (img) {
                     await new Promise((resolve) => {
                         const tempImg = new Image();
                         tempImg.onload = () => {
-                            ctx.drawImage(tempImg, qrX + 24, qrY + 24, qrSize, qrSize);
+                            ctx.drawImage(tempImg, qrX + 22, qrY + 22, qrSize, qrSize);
                             resolve();
                         };
                         tempImg.src = img.src;
                     });
                 }
                 
-                const infoY = qrY + qrSize + 80;
-                const infoPadding = 30;
-                roundRect(infoPadding - 2, infoY - 2, cardWidth - infoPadding * 2 + 4, 164, 18);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fill();
+                // Draw info section
+                const infoY = qrY + qrSize + 75;
+                const infoPadding = 28;
                 
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                // Info background with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
                 ctx.shadowBlur = 15;
                 ctx.shadowOffsetY = 8;
-                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 160, 16);
-                const infoGradient = ctx.createLinearGradient(0, infoY, 0, infoY + 160);
-                infoGradient.addColorStop(0, '#ffffff');
-                infoGradient.addColorStop(1, '#f8f9fa');
-                ctx.fillStyle = infoGradient;
+                
+                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 150, 18);
+                ctx.fillStyle = 'white';
                 ctx.fill();
                 
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
                 
-                const infoLeft = infoPadding + 24;
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(infoLeft, infoY + 20, 3, 18);
+                // Info content
+                const infoLeft = infoPadding + 22;
+                
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 13px Inter, sans-serif';
-                ctx.fillText('PAY TO', infoLeft + 10, infoY + 33);
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('PAY TO', infoLeft, infoY + 28);
                 
-                ctx.fillStyle = '#1a1a2e';
-                ctx.font = 'bold 26px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.name, infoLeft + 10, infoY + 65);
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 58);
                 
                 ctx.fillStyle = '#667eea';
-                ctx.font = '15px Inter, sans-serif';
-                ctx.fillText('🔗 ' + currentQRInfo.upiId, infoLeft + 10, infoY + 92);
+                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 82);
                 
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(infoLeft + 10, infoY + 105);
-                ctx.lineTo(cardWidth - infoPadding - 24, infoY + 105);
-                ctx.stroke();
-                
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(infoLeft, infoY + 118, 3, 18);
+                // Amount section
                 ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 13px Inter, sans-serif';
-                ctx.fillText('AMOUNT', infoLeft + 10, infoY + 131);
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('AMOUNT', infoLeft, infoY + 108);
                 
-                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 135, infoLeft + 250, infoY + 155);
+                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 112, infoLeft + 200, infoY + 138);
                 amountGradient.addColorStop(0, '#667eea');
-                amountGradient.addColorStop(0.5, '#764ba2');
-                amountGradient.addColorStop(1, '#FFD700');
+                amountGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = amountGradient;
-                ctx.font = 'bold 38px Inter, sans-serif';
-                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft + 10, infoY + 153);
+                ctx.font = 'bold 36px Inter, sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 140);
                 
                 // Convert to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
@@ -3460,195 +3394,95 @@
                     ctx.closePath();
                 }
                 
-                // Draw outer border with gold gradient
-                const outerBorder = 8;
+                // Draw main card background with clean gradient
+                const outerBorder = 0;
                 roundRect(0, 0, cardWidth, cardHeight, borderRadius);
-                const borderGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
-                borderGradient.addColorStop(0, '#FFD700');
-                borderGradient.addColorStop(0.5, '#FFA500');
-                borderGradient.addColorStop(1, '#FFD700');
-                ctx.fillStyle = borderGradient;
-                ctx.fill();
-                
-                // Draw main card background with premium gradient
-                roundRect(outerBorder, outerBorder, cardWidth - outerBorder * 2, cardHeight - outerBorder * 2, borderRadius - 4);
                 const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
-                bgGradient.addColorStop(0, '#1a1a2e');
-                bgGradient.addColorStop(0.5, '#16213e');
-                bgGradient.addColorStop(1, '#0f3460');
+                bgGradient.addColorStop(0, '#667eea');
+                bgGradient.addColorStop(0.5, '#764ba2');
+                bgGradient.addColorStop(1, '#5b4a9f');
                 ctx.fillStyle = bgGradient;
                 ctx.fill();
                 
-                // Draw decorative corner patterns
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.lineWidth = 2;
-                
-                // Top-left corner pattern
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(outerBorder + 30, outerBorder + 30, 15 + i * 8, Math.PI, Math.PI * 1.5);
-                    ctx.stroke();
-                }
-                
-                // Top-right corner pattern
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(cardWidth - outerBorder - 30, outerBorder + 30, 15 + i * 8, Math.PI * 1.5, Math.PI * 2);
-                    ctx.stroke();
-                }
-                
-                // Bottom-left corner pattern
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(outerBorder + 30, cardHeight - outerBorder - 30, 15 + i * 8, Math.PI * 0.5, Math.PI);
-                    ctx.stroke();
-                }
-                
-                // Bottom-right corner pattern
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.arc(cardWidth - outerBorder - 30, cardHeight - outerBorder - 30, 15 + i * 8, 0, Math.PI * 0.5);
-                    ctx.stroke();
-                }
-                
-                // Draw decorative diamond pattern background
-                ctx.globalAlpha = 0.05;
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 1;
-                for (let x = 0; x < cardWidth; x += 40) {
-                    for (let y = 0; y < cardHeight; y += 40) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, y + 10);
-                        ctx.lineTo(x + 10, y);
-                        ctx.lineTo(x + 20, y + 10);
-                        ctx.lineTo(x + 10, y + 20);
-                        ctx.closePath();
-                        ctx.stroke();
-                    }
-                }
+                // Draw subtle decorative circles
+                ctx.globalAlpha = 0.1;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(80, 80, 120, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cardWidth - 80, cardHeight - 80, 140, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.globalAlpha = 1;
                 
-                // Draw header section with gold border
-                const headerPadding = 30;
-                const headerY = 25;
+                // Draw header section
+                const headerPadding = 28;
+                const headerY = 28;
                 
-                // Header gold border
-                roundRect(headerPadding - 2, headerY - 2, cardWidth - headerPadding * 2 + 4, 104, 18);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fill();
-                
-                // Header main background
-                roundRect(headerPadding, headerY, cardWidth - headerPadding * 2, 100, 16);
-                const headerGradient = ctx.createLinearGradient(0, headerY, 0, headerY + 100);
-                headerGradient.addColorStop(0, '#ffffff');
-                headerGradient.addColorStop(1, '#f8f9fa');
-                ctx.fillStyle = headerGradient;
-                ctx.fill();
-                
-                // Header decorative line
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(headerPadding + 40, headerY + 50);
-                ctx.lineTo(cardWidth - headerPadding - 40, headerY + 50);
-                ctx.stroke();
-                
-                // Header text
-                ctx.fillStyle = '#1a1a2e';
-                ctx.font = 'bold 28px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerY + 38);
-                ctx.font = '14px Inter, sans-serif';
-                ctx.fillStyle = '#667eea';
-                ctx.fillText('✦ Scan to Pay Instantly ✦', cardWidth / 2, headerY + 75);
-                
-                // Draw QR container with premium border
-                const qrY = 155;
-                const qrX = (cardWidth - qrSize - 48) / 2;
-                
-                // QR outer gold border
-                ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+                // Header with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
                 ctx.shadowBlur = 15;
-                roundRect(qrX - 4, qrY - 4, qrSize + 56, qrSize + 56, 22);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+                ctx.shadowOffsetY = 8;
+                
+                roundRect(headerPadding, headerY, cardWidth - headerPadding * 2, 95, 18);
+                ctx.fillStyle = 'white';
                 ctx.fill();
                 
-                // QR white container
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-                ctx.shadowBlur = 20;
-                ctx.shadowOffsetY = 10;
-                roundRect(qrX, qrY, qrSize + 48, qrSize + 48, 20);
-                ctx.fillStyle = '#ffffff';
-                ctx.fill();
-                
-                // QR decorative corners
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
-                ctx.strokeStyle = '#667eea';
-                ctx.lineWidth = 3;
-                const cornerSize = 20;
                 
-                // Top-left QR corner
-                ctx.beginPath();
-                ctx.moveTo(qrX + 15, qrY + 15 + cornerSize);
-                ctx.lineTo(qrX + 15, qrY + 15);
-                ctx.lineTo(qrX + 15 + cornerSize, qrY + 15);
-                ctx.stroke();
+                // Header text
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 28px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerY + 40);
+                ctx.font = '15px Inter, sans-serif';
+                ctx.fillStyle = '#667eea';
+                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerY + 70);
                 
-                // Top-right QR corner
-                ctx.beginPath();
-                ctx.moveTo(qrX + qrSize + 48 - 15 - cornerSize, qrY + 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + 15 + cornerSize);
-                ctx.stroke();
+                // Draw QR container
+                const qrY = 150;
+                const qrX = (cardWidth - qrSize - 44) / 2;
                 
-                // Bottom-left QR corner
-                ctx.beginPath();
-                ctx.moveTo(qrX + 15, qrY + qrSize + 48 - 15 - cornerSize);
-                ctx.lineTo(qrX + 15, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + 15 + cornerSize, qrY + qrSize + 48 - 15);
-                ctx.stroke();
+                // QR white container with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetY = 12;
                 
-                // Bottom-right QR corner
-                ctx.beginPath();
-                ctx.moveTo(qrX + qrSize + 48 - 15 - cornerSize, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + qrSize + 48 - 15);
-                ctx.lineTo(qrX + qrSize + 48 - 15, qrY + qrSize + 48 - 15 - cornerSize);
-                ctx.stroke();
+                roundRect(qrX, qrY, qrSize + 44, qrSize + 44, 20);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
                 
                 // Draw QR code
                 if (canvas) {
-                    ctx.drawImage(canvas, qrX + 24, qrY + 24, qrSize, qrSize);
+                    ctx.drawImage(canvas, qrX + 22, qrY + 22, qrSize, qrSize);
                 } else {
                     const tempImg = new Image();
                     tempImg.src = img.src;
                     await new Promise(resolve => {
                         tempImg.onload = () => {
-                            ctx.drawImage(tempImg, qrX + 24, qrY + 24, qrSize, qrSize);
+                            ctx.drawImage(tempImg, qrX + 22, qrY + 22, qrSize, qrSize);
                             resolve();
                         };
                     });
                 }
                 
-                // Draw info section with gold border
-                const infoY = qrY + qrSize + 80;
-                const infoPadding = 30;
+                // Draw info section
+                const infoY = qrY + qrSize + 75;
+                const infoPadding = 28;
                 
-                // Info gold border
-                roundRect(infoPadding - 2, infoY - 2, cardWidth - infoPadding * 2 + 4, 164, 18);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fill();
-                
-                // Info main background
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                // Info background with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
                 ctx.shadowBlur = 15;
                 ctx.shadowOffsetY = 8;
-                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 160, 16);
-                const infoGradient = ctx.createLinearGradient(0, infoY, 0, infoY + 160);
-                infoGradient.addColorStop(0, '#ffffff');
-                infoGradient.addColorStop(1, '#f8f9fa');
-                ctx.fillStyle = infoGradient;
+                
+                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 150, 18);
+                ctx.fillStyle = 'white';
                 ctx.fill();
                 
                 ctx.shadowColor = 'transparent';
@@ -3656,49 +3490,32 @@
                 ctx.shadowOffsetY = 0;
                 
                 // Info content
-                const infoLeft = infoPadding + 24;
+                const infoLeft = infoPadding + 22;
                 
-                // Pay to label with gold accent
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(infoLeft, infoY + 20, 3, 18);
-                ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 13px Inter, sans-serif';
                 ctx.textAlign = 'left';
-                ctx.fillText('PAY TO', infoLeft + 10, infoY + 33);
-                
-                // Name
-                ctx.fillStyle = '#1a1a2e';
-                ctx.font = 'bold 26px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.name, infoLeft + 10, infoY + 65);
-                
-                // UPI ID with icon
-                ctx.fillStyle = '#667eea';
-                ctx.font = '15px Inter, sans-serif';
-                ctx.fillText('🔗 ' + currentQRInfo.upiId, infoLeft + 10, infoY + 92);
-                
-                // Decorative line
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(infoLeft + 10, infoY + 105);
-                ctx.lineTo(cardWidth - infoPadding - 24, infoY + 105);
-                ctx.stroke();
-                
-                // Amount label with gold accent
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(infoLeft, infoY + 118, 3, 18);
                 ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 13px Inter, sans-serif';
-                ctx.fillText('AMOUNT', infoLeft + 10, infoY + 131);
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('PAY TO', infoLeft, infoY + 28);
                 
-                // Amount value with premium gradient
-                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 135, infoLeft + 250, infoY + 155);
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 24px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 58);
+                
+                ctx.fillStyle = '#667eea';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 82);
+                
+                // Amount section
+                ctx.fillStyle = '#64748b';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText('AMOUNT', infoLeft, infoY + 108);
+                
+                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 112, infoLeft + 200, infoY + 138);
                 amountGradient.addColorStop(0, '#667eea');
-                amountGradient.addColorStop(0.5, '#764ba2');
-                amountGradient.addColorStop(1, '#FFD700');
+                amountGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = amountGradient;
-                ctx.font = 'bold 38px Inter, sans-serif';
-                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft + 10, infoY + 153);
+                ctx.font = 'bold 36px Inter, sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 140);
                 
                 // Convert styled canvas to blob
                 const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
