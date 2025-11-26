@@ -1909,7 +1909,7 @@
             </div>
             
             <div class="modal-buttons" style="margin-top: 20px;">
-                <button class="btn" onclick="shareAllGroupQRs()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <button id="shareAllBtn" class="btn" onclick="shareAllGroupQRs()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: none;">
                     📤 Share All QRs
                 </button>
                 <button class="btn btn-secondary" onclick="closeGroupQRModal()">Done</button>
@@ -2827,13 +2827,14 @@
                 const numPeople = parseInt(document.getElementById('numberOfPeople').value);
                 const splitAmount = totalBill / numPeople;
                 
-                for (let i = 1; i <= numPeople; i++) {
-                    members.push({
-                        name: `Person ${i}`,
-                        amount: splitAmount.toFixed(2),
-                        paid: false
-                    });
-                }
+                // For equal split, generate only ONE QR with the split amount
+                members.push({
+                    name: `Equal Split (${numPeople} people)`,
+                    amount: splitAmount.toFixed(2),
+                    paid: false,
+                    isEqualSplit: true,
+                    numPeople: numPeople
+                });
             } else {
                 const assignedTotal = groupMembers.reduce((sum, m) => sum + (m.amount || 0), 0);
                 if (Math.abs(assignedTotal - totalBill) > 0.01) {
@@ -2844,7 +2845,8 @@
                 members = groupMembers.filter(m => m.name && m.amount > 0).map(m => ({
                     name: m.name,
                     amount: m.amount.toFixed(2),
-                    paid: false
+                    paid: false,
+                    isEqualSplit: false
                 }));
                 
                 if (members.length === 0) {
@@ -2898,23 +2900,32 @@
                 const card = document.createElement('div');
                 card.style.cssText = 'background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px;';
                 
+                // Show additional info for equal split
+                const additionalInfo = member.isEqualSplit ? 
+                    `<div style="color: #48bb78; font-size: 0.85rem; margin-top: 4px;">💡 Each person pays ₹${member.amount}</div>` : '';
+                
                 card.innerHTML = `
                     <img src="${member.qrImage}" style="width: 80px; height: 80px; border-radius: 8px;">
                     <div style="flex: 1;">
                         <div style="font-weight: 600; font-size: 1.1rem; color: #1e293b; margin-bottom: 4px;">${member.name}</div>
                         <div style="color: #667eea; font-weight: 700; font-size: 1.3rem;">₹${member.amount}</div>
-                        <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">
-                            ${member.paid ? '<span style="color: #48bb78;">✅ Paid</span>' : '<span style="color: #f59e0b;">⏳ Pending</span>'}
-                        </div>
+                        ${additionalInfo}
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <button onclick="shareIndividualQR(${index})" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">📤 Share</button>
-                        <button onclick="togglePaidStatus(${index})" style="padding: 8px 12px; background: ${member.paid ? '#ef4444' : '#48bb78'}; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">${member.paid ? '❌ Unpay' : '✅ Mark Paid'}</button>
                     </div>
                 `;
                 
                 container.appendChild(card);
             });
+            
+            // Show "Share All" button only for custom split with multiple QRs
+            const shareAllBtn = document.getElementById('shareAllBtn');
+            if (generatedGroupQRs.length > 1 && !generatedGroupQRs[0].isEqualSplit) {
+                shareAllBtn.style.display = 'block';
+            } else {
+                shareAllBtn.style.display = 'none';
+            }
             
             document.getElementById('groupQRModal').classList.add('active');
         }
@@ -2930,18 +2941,24 @@
         
         async function shareIndividualQR(index) {
             const member = generatedGroupQRs[index];
-            const message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
+            
+            let message;
+            if (member.isEqualSplit) {
+                message = `💵 *Split Bill Payment*\n\n👥 ${member.numPeople} people sharing equally\n💰 Amount per person: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay your share instantly!`;
+            } else {
+                message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
+            }
             
             // Convert base64 to blob
             const response = await fetch(member.qrImage);
             const blob = await response.blob();
-            const file = new File([blob], `split-payment-${member.name}.png`, { type: 'image/png' });
+            const file = new File([blob], `split-payment-${member.amount}.png`, { type: 'image/png' });
             
             if (navigator.share) {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: `Payment Request - ${member.name}`,
+                        title: member.isEqualSplit ? 'Equal Split Payment' : `Payment Request - ${member.name}`,
                         text: message
                     });
                 } catch (err) {
@@ -2951,7 +2968,7 @@
                 // Fallback - download
                 const link = document.createElement('a');
                 link.href = member.qrImage;
-                link.download = `split-payment-${member.name}.png`;
+                link.download = `split-payment-${member.amount}.png`;
                 link.click();
                 alert('✅ QR downloaded!\n\nShare this message:\n' + message);
             }
