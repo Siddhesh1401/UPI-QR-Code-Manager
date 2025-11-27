@@ -2966,27 +2966,76 @@
             return new Promise((resolve) => {
                 const qr = new QRCode(container, {
                     text: upiString,
-                    width: 256,
-                    height: 256,
+                    width: 320,
+                    height: 320,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
                 });
                 
-                // Wait for QR generation
-                setTimeout(() => {
-                    const img = container.querySelector('img');
-                    const canvas = container.querySelector('canvas');
-                    let dataUrl = null;
+                // Wait for QR generation and create styled card
+                setTimeout(async () => {
+                    const qrCanvas = container.querySelector('canvas');
+                    const qrImg = container.querySelector('img');
                     
-                    if (canvas) {
-                        dataUrl = canvas.toDataURL('image/png');
-                    } else if (img) {
-                        dataUrl = img.src;
+                    if (!qrCanvas && !qrImg) {
+                        document.body.removeChild(container);
+                        resolve(null);
+                        return;
                     }
                     
+                    // Create styled card
+                    const cardCanvas = document.createElement('canvas');
+                    const ctx = cardCanvas.getContext('2d');
+                    
+                    const size = 512;
+                    cardCanvas.width = size;
+                    cardCanvas.height = size;
+                    
+                    // Background gradient
+                    const gradient = ctx.createLinearGradient(0, 0, size, size);
+                    gradient.addColorStop(0, '#667eea');
+                    gradient.addColorStop(1, '#764ba2');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, size, size);
+                    
+                    // White card container
+                    ctx.fillStyle = 'white';
+                    const padding = 40;
+                    ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
+                    
+                    // Draw QR code
+                    const qrSize = 320;
+                    const qrX = (size - qrSize) / 2;
+                    const qrY = 80;
+                    
+                    if (qrCanvas) {
+                        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+                    } else if (qrImg) {
+                        const tempImg = new Image();
+                        tempImg.src = qrImg.src;
+                        await new Promise(res => {
+                            tempImg.onload = () => {
+                                ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
+                                res();
+                            };
+                        });
+                    }
+                    
+                    // Draw member name
+                    ctx.fillStyle = '#1e293b';
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(name, size / 2, qrY + qrSize + 35);
+                    
+                    // Draw amount
+                    ctx.fillStyle = '#667eea';
+                    ctx.font = 'bold 32px sans-serif';
+                    ctx.fillText(`₹${amount}`, size / 2, qrY + qrSize + 70);
+                    
+                    // Clean up and return
                     document.body.removeChild(container);
-                    resolve(dataUrl);
+                    resolve(cardCanvas.toDataURL('image/png'));
                 }, 300);
             });
         }
@@ -3161,9 +3210,9 @@
             
             let message;
             if (member.isEqualSplit) {
-                message = `💵 *Split Bill Payment*\n\n👥 ${member.numPeople} people sharing equally\n💰 Amount per person: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay your share instantly!`;
+                message = `💵 *Split Bill Payment*\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
             } else {
-                message = `💵 *Split Payment Request*\n\n👤 ${member.name}\n💰 Amount: *₹${member.amount}*\n🏪 Pay to: ${splitSelectedProfile.name}\n🆔 UPI: ${splitSelectedProfile.upiId}\n\n📱 Scan QR code to pay instantly!`;
+                message = `💵 *Payment for ${member.name}*\n\n💰 Amount: *₹${member.amount}*\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
             }
             
             // Convert base64 to blob
@@ -3194,16 +3243,15 @@
         async function shareAllGroupQRs() {
             try {
                 // Create combined message
-                let message = `💵 *Split Payment Request - ${generatedGroupQRs.length} people*\n\n`;
-                message += `🏪 Pay to: ${splitSelectedProfile.name}\n`;
-                message += `🆔 UPI: ${splitSelectedProfile.upiId}\n\n`;
-                message += `💰 Payment Details:\n`;
+                let message = `💵 *Split Bill - ${generatedGroupQRs.length} people*\n\n`;
+                message += `🏪 ${splitSelectedProfile.name}\n`;
+                message += `🆔 ${splitSelectedProfile.upiId}\n\n`;
                 
                 generatedGroupQRs.forEach(member => {
-                    message += `   • ${member.name}: ₹${member.amount}\n`;
+                    message += `• ${member.name}: *₹${member.amount}*\n`;
                 });
                 
-                message += `\n📱 Scan your QR code to pay instantly!`;
+                message += `\n📱 Each person scan your QR to pay!`;
                 
                 // Convert all QR images to files
                 const files = [];
