@@ -3886,8 +3886,7 @@
                 const dataUrl = styledCanvas.toDataURL('image/png');
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
-                const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
-                const file = new File([blob], fileName, { type: 'image/png' });
+                const file = new File([blob], `payment-${currentQRInfo.amount}.png`, { type: 'image/png' });
                 
                 // Create simple message
                 const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}`;
