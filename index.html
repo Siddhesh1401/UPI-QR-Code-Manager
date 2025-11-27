@@ -3211,11 +3211,14 @@
         async function shareIndividualQR(index) {
             const member = generatedGroupQRs[index];
             
+            // Create UPI link
+            const upiLink = `upi://pay?pa=${encodeURIComponent(splitSelectedProfile.upiId)}&pn=${encodeURIComponent(splitSelectedProfile.name)}&am=${member.amount}&cu=INR`;
+            
             let message;
             if (member.isEqualSplit) {
-                message = `💵 Split Bill Payment\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
+                message = `💵 Split Bill Payment\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
             } else {
-                message = `💵 Payment for ${member.name}\n\n💰 Amount: ₹${member.amount}\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
+                message = `💵 Payment for ${member.name}\n\n💰 Amount: ₹${member.amount}\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
             }
             
             // Convert base64 to blob
@@ -3886,18 +3889,26 @@
                 const dataUrl = styledCanvas.toDataURL('image/png');
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
-                const file = new File([blob], `payment-${currentQRInfo.amount}.png`, { type: 'image/png' });
+                const file = new File([blob], `payment-qr-${currentQRInfo.amount}.png`, { type: 'image/png' });
                 
-                // Create simple message
-                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}`;
+                // Create a tiny invisible dummy file (Android needs 2+ files to show text field)
+                // 1x1 transparent PNG (smallest possible)
+                const dummyData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                const dummyResponse = await fetch(dummyData);
+                const dummyBlob = await dummyResponse.blob();
+                const dummyFile = new File([dummyBlob], '.info.png', { type: 'image/png' });
+                
+                // Create message with UPI link
+                const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
                 
                 closeShareModal(); // Close modal before sharing
                 
                 if (navigator.share) {
                     try {
-                        // Test with multiple files like split does
+                        // Share QR + tiny dummy file (Android needs multiple files to show text)
                         await navigator.share({
-                            files: [file, file],
+                            files: [file, dummyFile],
                             title: 'UPI Payment Request',
                             text: message
                         });
