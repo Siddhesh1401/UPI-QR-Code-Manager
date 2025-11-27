@@ -2956,6 +2956,59 @@
             showGroupQRResults();
         }
         
+        // Reusable function to create consistent styled QR cards
+        async function createStyledQRCard(qrCanvas, qrImg, displayName, amount) {
+            const cardCanvas = document.createElement('canvas');
+            const ctx = cardCanvas.getContext('2d');
+            
+            const size = 512;
+            const qrSize = 320;
+            cardCanvas.width = size;
+            cardCanvas.height = size;
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // White card container
+            ctx.fillStyle = 'white';
+            const padding = 40;
+            ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
+            
+            // Draw QR code
+            const qrX = (size - qrSize) / 2;
+            const qrY = 80;
+            
+            if (qrCanvas) {
+                ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+            } else if (qrImg) {
+                await new Promise(res => {
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                        ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
+                        res();
+                    };
+                    tempImg.src = qrImg.src;
+                });
+            }
+            
+            // Draw name
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(displayName, size / 2, qrY + qrSize + 35);
+            
+            // Draw amount
+            ctx.fillStyle = '#667eea';
+            ctx.font = 'bold 32px sans-serif';
+            ctx.fillText(`₹${amount}`, size / 2, qrY + qrSize + 70);
+            
+            return cardCanvas;
+        }
+        
         async function generateMemberQR(name, amount) {
             const note = `Payment to ${splitSelectedProfile.name} - Split bill for ${name}`;
             const upiString = `upi://pay?pa=${splitSelectedProfile.upiId}&pn=${encodeURIComponent(splitSelectedProfile.name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
@@ -2976,7 +3029,7 @@
                     correctLevel: QRCode.CorrectLevel.H
                 });
                 
-                // Wait for QR generation and create styled card
+                // Wait for QR generation and create styled card using reusable function
                 setTimeout(async () => {
                     const qrCanvas = container.querySelector('canvas');
                     const qrImg = container.querySelector('img');
@@ -2987,58 +3040,12 @@
                         return;
                     }
                     
-                    // Create styled card
-                    const cardCanvas = document.createElement('canvas');
-                    const ctx = cardCanvas.getContext('2d');
-                    
-                    const size = 512;
-                    cardCanvas.width = size;
-                    cardCanvas.height = size;
-                    
-                    // Background gradient
-                    const gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, '#667eea');
-                    gradient.addColorStop(1, '#764ba2');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, size, size);
-                    
-                    // White card container
-                    ctx.fillStyle = 'white';
-                    const padding = 40;
-                    ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
-                    
-                    // Draw QR code
-                    const qrSize = 320;
-                    const qrX = (size - qrSize) / 2;
-                    const qrY = 80;
-                    
-                    if (qrCanvas) {
-                        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-                    } else if (qrImg) {
-                        const tempImg = new Image();
-                        tempImg.src = qrImg.src;
-                        await new Promise(res => {
-                            tempImg.onload = () => {
-                                ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
-                                res();
-                            };
-                        });
-                    }
-                    
-                    // Draw member name
-                    ctx.fillStyle = '#1e293b';
-                    ctx.font = 'bold 22px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(name, size / 2, qrY + qrSize + 35);
-                    
-                    // Draw amount
-                    ctx.fillStyle = '#667eea';
-                    ctx.font = 'bold 32px sans-serif';
-                    ctx.fillText(`₹${amount}`, size / 2, qrY + qrSize + 70);
+                    // Use reusable styling function for consistent design
+                    const styledCard = await createStyledQRCard(qrCanvas, qrImg, name, amount);
                     
                     // Clean up and return
                     document.body.removeChild(container);
-                    resolve(cardCanvas.toDataURL('image/png'));
+                    resolve(styledCard.toDataURL('image/png'));
                 }, 300);
             });
         }
@@ -3736,154 +3743,56 @@
                     return;
                 }
                 
-                // Use premium styled canvas with decorative patterns
+                // Use same consistent professional design as split calculator
                 const sourceElement = canvas || img;
                 const styledCanvas = document.createElement('canvas');
                 const ctx = styledCanvas.getContext('2d');
                 
+                const size = 512;
                 const qrSize = 320;
-                const cardWidth = 480;
-                const cardHeight = 720;
-                const borderRadius = 28;
                 
-                styledCanvas.width = cardWidth;
-                styledCanvas.height = cardHeight;
+                styledCanvas.width = size;
+                styledCanvas.height = size;
                 
-                function roundRect(x, y, width, height, radius) {
-                    ctx.beginPath();
-                    ctx.moveTo(x + radius, y);
-                    ctx.lineTo(x + width - radius, y);
-                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-                    ctx.lineTo(x + width, y + height - radius);
-                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-                    ctx.lineTo(x + radius, y + height);
-                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-                    ctx.lineTo(x, y + radius);
-                    ctx.quadraticCurveTo(x, y, x + radius, y);
-                    ctx.closePath();
-                }
+                // Background gradient (same as split calculator)
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
                 
-                // Draw main card background with clean gradient
-                const outerBorder = 0;
-                roundRect(0, 0, cardWidth, cardHeight, borderRadius);
-                const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
-                bgGradient.addColorStop(0, '#667eea');
-                bgGradient.addColorStop(0.5, '#764ba2');
-                bgGradient.addColorStop(1, '#5b4a9f');
-                ctx.fillStyle = bgGradient;
-                ctx.fill();
-                
-                // Draw subtle decorative circles
-                ctx.globalAlpha = 0.1;
+                // White card container
                 ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(80, 80, 120, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cardWidth - 80, cardHeight - 80, 140, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
+                const padding = 40;
+                ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
                 
-                // Draw header section
-                const headerPadding = 28;
-                const headerY = 28;
-                
-                // Header with shadow
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetY = 8;
-                
-                roundRect(headerPadding, headerY, cardWidth - headerPadding * 2, 95, 18);
-                ctx.fillStyle = 'white';
-                ctx.fill();
-                
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Header text
-                ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 28px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('UPI PAYMENT', cardWidth / 2, headerY + 40);
-                ctx.font = '15px Inter, sans-serif';
-                ctx.fillStyle = '#667eea';
-                ctx.fillText('Scan to Pay Instantly', cardWidth / 2, headerY + 70);
-                
-                // Draw QR container
-                const qrY = 150;
-                const qrX = (cardWidth - qrSize - 44) / 2;
-                
-                // QR white container with shadow
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-                ctx.shadowBlur = 25;
-                ctx.shadowOffsetY = 12;
-                
-                roundRect(qrX, qrY, qrSize + 44, qrSize + 44, 20);
-                ctx.fillStyle = '#ffffff';
-                ctx.fill();
-                
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
+                // Draw QR code
+                const qrX = (size - qrSize) / 2;
+                const qrY = 80;
                 
                 if (canvas) {
-                    ctx.drawImage(canvas, qrX + 22, qrY + 22, qrSize, qrSize);
+                    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
                 } else if (img) {
                     await new Promise((resolve) => {
                         const tempImg = new Image();
                         tempImg.onload = () => {
-                            ctx.drawImage(tempImg, qrX + 22, qrY + 22, qrSize, qrSize);
+                            ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
                             resolve();
                         };
                         tempImg.src = img.src;
                     });
                 }
                 
-                // Draw info section
-                const infoY = qrY + qrSize + 75;
-                const infoPadding = 28;
-                
-                // Info background with shadow
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetY = 8;
-                
-                roundRect(infoPadding, infoY, cardWidth - infoPadding * 2, 150, 18);
-                ctx.fillStyle = 'white';
-                ctx.fill();
-                
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Info content
-                const infoLeft = infoPadding + 22;
-                
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 12px Inter, sans-serif';
-                ctx.fillText('PAY TO', infoLeft, infoY + 28);
-                
+                // Draw name
                 ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 24px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.name, infoLeft, infoY + 58);
+                ctx.font = 'bold 22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(currentQRInfo.name, size / 2, qrY + qrSize + 35);
                 
+                // Draw amount
                 ctx.fillStyle = '#667eea';
-                ctx.font = '14px Inter, sans-serif';
-                ctx.fillText(currentQRInfo.upiId, infoLeft, infoY + 82);
-                
-                // Amount section
-                ctx.fillStyle = '#64748b';
-                ctx.font = 'bold 12px Inter, sans-serif';
-                ctx.fillText('AMOUNT', infoLeft, infoY + 108);
-                
-                const amountGradient = ctx.createLinearGradient(infoLeft, infoY + 112, infoLeft + 200, infoY + 138);
-                amountGradient.addColorStop(0, '#667eea');
-                amountGradient.addColorStop(1, '#764ba2');
-                ctx.fillStyle = amountGradient;
-                ctx.font = 'bold 36px Inter, sans-serif';
-                ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 140);
+                ctx.font = 'bold 32px sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, size / 2, qrY + qrSize + 70);
                 
                 // Convert canvas to blob FIRST (same method as split function)
                 const dataUrl = styledCanvas.toDataURL('image/png');
