@@ -3886,22 +3886,29 @@
                 
                 const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📦 Scan QR above or 🔗 Click link below:\n\n👉 ${shortUrl}\n\n✅ Use either method - both instant!`;
                 
+                // Check if sharing is supported
+                console.log('Navigator.share available:', !!navigator.share);
+                console.log('File to share:', file);
+                
                 if (navigator.share) {
                     try {
+                        console.log('Attempting to share file + text...');
                         await navigator.share({
                             files: [file],
                             title: 'UPI Payment Request',
                             text: message
                         });
+                        console.log('Share successful!');
                     } catch (shareError) {
                         if (shareError.name === 'AbortError') {
+                            console.log('Share cancelled by user');
                             return;
                         }
-                        console.error('Share error:', shareError);
+                        console.error('Share failed:', shareError.name, shareError.message);
+                        alert('⚠️ Share failed: ' + shareError.message + '\n\nFalling back to download...');
                         // Fallback: copy message and download
                         if (navigator.clipboard) {
                             await navigator.clipboard.writeText(message);
-                            alert('✅ Payment details copied to clipboard!\nDownloading QR code...');
                         }
                         const downloadLink = document.createElement('a');
                         downloadLink.href = styledCanvas.toDataURL('image/png');
@@ -3909,10 +3916,11 @@
                         downloadLink.click();
                     }
                 } else {
+                    console.log('Share API not supported, using fallback');
+                    alert('⚠️ Share API not supported on this device.\n\nCopying text and downloading QR...');
                     // Fallback: copy message and download
                     if (navigator.clipboard) {
                         await navigator.clipboard.writeText(message);
-                        alert('✅ Payment details copied!\nDownloading QR code...');
                     }
                     const downloadLink = document.createElement('a');
                     downloadLink.href = styledCanvas.toDataURL('image/png');
