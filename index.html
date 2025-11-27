@@ -3711,7 +3711,6 @@
         }
         
         async function shareBoth() {
-            closeShareModal();
             if (!currentQRInfo) {
                 alert('⚠️ QR information not found');
                 return;
@@ -3905,6 +3904,7 @@
                 
                 if (navigator.share) {
                     try {
+                        closeShareModal(); // Close modal right before sharing
                         await navigator.share(shareData);
                     } catch (err) {
                         if (err.name === 'AbortError') {
