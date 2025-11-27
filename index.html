@@ -3875,57 +3875,51 @@
                 ctx.font = 'bold 36px Inter, sans-serif';
                 ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 140);
                 
-                // Convert to blob
-                const blob = await new Promise(resolve => styledCanvas.toBlob(resolve, 'image/png'));
-                const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
-                const file = new File([blob], fileName, { type: 'image/png' });
-                
-                // Create the message text with shortened URL
+                // Create the message text with shortened URL FIRST
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
                 const shortUrl = await shortenUrl(upiLink);
                 
                 const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📦 Scan QR above or 🔗 Click link below:\n\n👉 ${shortUrl}\n\n✅ Use either method - both instant!`;
                 
-                // Check if sharing is supported
-                console.log('Navigator.share available:', !!navigator.share);
-                console.log('File to share:', file);
+                // Convert canvas to blob using fetch (same method as split function)
+                const dataUrl = styledCanvas.toDataURL('image/png');
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+                const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
                 
                 if (navigator.share) {
                     try {
-                        console.log('Attempting to share file + text...');
                         await navigator.share({
                             files: [file],
                             title: 'UPI Payment Request',
                             text: message
                         });
-                        console.log('Share successful!');
-                    } catch (shareError) {
-                        if (shareError.name === 'AbortError') {
-                            console.log('Share cancelled by user');
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
                             return;
                         }
-                        console.error('Share failed:', shareError.name, shareError.message);
-                        alert('⚠️ Share failed: ' + shareError.message + '\n\nFalling back to download...');
-                        // Fallback: copy message and download
+                        console.log('Share cancelled or failed:', err);
+                        // Fallback: download and copy
+                        const link = document.createElement('a');
+                        link.href = dataUrl;
+                        link.download = fileName;
+                        link.click();
                         if (navigator.clipboard) {
                             await navigator.clipboard.writeText(message);
                         }
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = styledCanvas.toDataURL('image/png');
-                        downloadLink.download = fileName;
-                        downloadLink.click();
+                        alert('✅ QR downloaded!\n\nMessage copied to clipboard');
                     }
                 } else {
-                    console.log('Share API not supported, using fallback');
-                    alert('⚠️ Share API not supported on this device.\n\nCopying text and downloading QR...');
-                    // Fallback: copy message and download
+                    // Fallback: download and copy
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = fileName;
+                    link.click();
                     if (navigator.clipboard) {
                         await navigator.clipboard.writeText(message);
                     }
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = styledCanvas.toDataURL('image/png');
-                    downloadLink.download = fileName;
-                    downloadLink.click();
+                    alert('✅ QR downloaded!\n\nShare this message:\n' + message);
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
