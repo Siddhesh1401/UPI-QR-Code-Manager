@@ -2959,19 +2959,36 @@
             
             // Create QR code canvas
             const container = document.createElement('div');
-            const qr = new QRCode(container, {
-                text: upiString,
-                width: 256,
-                height: 256,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            document.body.appendChild(container);
             
-            // Wait for QR generation and get image
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const img = container.querySelector('img');
-            return img ? img.src : null;
+            return new Promise((resolve) => {
+                const qr = new QRCode(container, {
+                    text: upiString,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                // Wait for QR generation
+                setTimeout(() => {
+                    const img = container.querySelector('img');
+                    const canvas = container.querySelector('canvas');
+                    let dataUrl = null;
+                    
+                    if (canvas) {
+                        dataUrl = canvas.toDataURL('image/png');
+                    } else if (img) {
+                        dataUrl = img.src;
+                    }
+                    
+                    document.body.removeChild(container);
+                    resolve(dataUrl);
+                }, 300);
+            });
         }
         
         function showGroupQRResults() {
@@ -3175,14 +3192,55 @@
         }
         
         async function shareAllGroupQRs() {
-            alert('📤 Sharing all ' + generatedGroupQRs.length + ' QR codes...\n\nYou\'ll be prompted to share each one.');
-            
-            for (let i = 0; i < generatedGroupQRs.length; i++) {
-                await shareIndividualQR(i);
-                await new Promise(resolve => setTimeout(resolve, 500));
+            try {
+                // Create combined message
+                let message = `💵 *Split Payment Request - ${generatedGroupQRs.length} people*\n\n`;
+                message += `🏪 Pay to: ${splitSelectedProfile.name}\n`;
+                message += `🆔 UPI: ${splitSelectedProfile.upiId}\n\n`;
+                message += `💰 Payment Details:\n`;
+                
+                generatedGroupQRs.forEach(member => {
+                    message += `   • ${member.name}: ₹${member.amount}\n`;
+                });
+                
+                message += `\n📱 Scan your QR code to pay instantly!`;
+                
+                // Convert all QR images to files
+                const files = [];
+                for (let i = 0; i < generatedGroupQRs.length; i++) {
+                    const member = generatedGroupQRs[i];
+                    const response = await fetch(member.qrImage);
+                    const blob = await response.blob();
+                    const file = new File([blob], `${member.name.replace(/[^a-z0-9]/gi, '_')}-₹${member.amount}.png`, { type: 'image/png' });
+                    files.push(file);
+                }
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files })) {
+                    await navigator.share({
+                        files: files,
+                        title: 'Split Payment QR Codes',
+                        text: message
+                    });
+                    alert('✅ All QR codes shared!');
+                } else {
+                    // Fallback - download all as zip would be complex, so share one by one
+                    alert('📤 Your browser doesn\'t support sharing multiple files at once.\n\nDownloading QR codes individually...');
+                    
+                    for (let i = 0; i < generatedGroupQRs.length; i++) {
+                        const member = generatedGroupQRs[i];
+                        const link = document.createElement('a');
+                        link.href = member.qrImage;
+                        link.download = `${member.name.replace(/[^a-z0-9]/gi, '_')}-₹${member.amount}.png`;
+                        link.click();
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                    
+                    alert('✅ All QR codes downloaded!\n\nShare this message:\n\n' + message);
+                }
+            } catch (err) {
+                console.error('Share failed:', err);
+                alert('❌ Sharing failed. Try sharing individual QR codes.');
             }
-            
-            alert('✅ All QR codes shared!');
         }
         
         // QR Card Template Renderer
