@@ -3891,12 +3891,10 @@
                 const blob = await response.blob();
                 const file = new File([blob], `payment-qr-${currentQRInfo.amount}.png`, { type: 'image/png' });
                 
-                // Create a tiny invisible dummy file (Android needs 2+ files to show text field)
-                // 1x1 transparent PNG (smallest possible)
-                const dummyData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-                const dummyResponse = await fetch(dummyData);
-                const dummyBlob = await dummyResponse.blob();
-                const dummyFile = new File([dummyBlob], `payment-info-${currentQRInfo.amount}.png`, { type: 'image/png' });
+                // Create a text file with payment details (Android needs 2+ files to show text field)
+                const paymentInfo = `UPI Payment Details\n\nPay to: ${currentQRInfo.name}\nAmount: ₹${currentQRInfo.amount}\nUPI ID: ${currentQRInfo.upiId}`;
+                const textBlob = new Blob([paymentInfo], { type: 'text/plain' });
+                const textFile = new File([textBlob], `payment-details-${currentQRInfo.amount}.txt`, { type: 'text/plain' });
                 
                 // Create message with UPI link
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
@@ -3906,11 +3904,11 @@
                 
                 if (navigator.share) {
                     try {
-                        console.log('Sharing files:', [file, dummyFile]);
+                        console.log('Sharing files:', [file, textFile]);
                         console.log('Message:', message);
-                        // Share QR + tiny dummy file (Android needs multiple files to show text)
+                        // Share QR + text file (Android needs multiple files to show text)
                         await navigator.share({
-                            files: [file, dummyFile],
+                            files: [file, textFile],
                             title: 'UPI Payment Request',
                             text: message
                         });
