@@ -3891,26 +3891,23 @@
                 const blob = await response.blob();
                 const file = new File([blob], `payment-qr-${currentQRInfo.amount}.png`, { type: 'image/png' });
                 
-                // Create a text file with payment details (Android needs 2+ files to show text field)
-                const paymentInfo = `UPI Payment Details\n\nPay to: ${currentQRInfo.name}\nAmount: ₹${currentQRInfo.amount}\nUPI ID: ${currentQRInfo.upiId}`;
-                const textBlob = new Blob([paymentInfo], { type: 'text/plain' });
-                const textFile = new File([textBlob], `payment-details-${currentQRInfo.amount}.txt`, { type: 'text/plain' });
-                
-                // Create message with UPI link
+                // Create UPI link
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
+                
+                // Create a text file with payment link (Android needs 2+ files to show text field)
+                const paymentInfo = `💳 UPI Payment Request\n\nPay to: ${currentQRInfo.name}\nAmount: ₹${currentQRInfo.amount}\nUPI ID: ${currentQRInfo.upiId}\n\n🔗 Click to Pay:\n${upiLink}`;
+                const textBlob = new Blob([paymentInfo], { type: 'text/plain' });
+                const textFile = new File([textBlob], `payment-link.txt`, { type: 'text/plain' });
                 
                 closeShareModal(); // Close modal before sharing
                 
                 if (navigator.share) {
                     try {
-                        console.log('Sharing files:', [file, textFile]);
-                        console.log('Message:', message);
-                        // Share QR + text file (Android needs multiple files to show text)
+                        console.log('Sharing QR + link file');
+                        // Share QR image + payment link text file
                         await navigator.share({
                             files: [file, textFile],
-                            title: 'UPI Payment Request',
-                            text: message
+                            title: 'UPI Payment - QR Code & Link'
                         });
                         console.log('Share success!');
                     } catch (err) {
