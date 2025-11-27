@@ -1,5 +1,5 @@
 // Service Worker for UPI QR Manager PWA
-const CACHE_NAME = 'upi-qr-manager-v27';
+const CACHE_NAME = 'upi-qr-manager-v28';
 
 // Detect base path
 const baseUrl = self.location.origin + self.registration.scope;

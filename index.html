@@ -3890,6 +3890,9 @@
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
+                // Small delay to ensure file is ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 if (navigator.share) {
                     try {
                         await navigator.share({
