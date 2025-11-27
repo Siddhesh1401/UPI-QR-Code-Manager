@@ -3223,13 +3223,18 @@
             const blob = await response.blob();
             const file = new File([blob], `split-payment-${member.amount}.png`, { type: 'image/png' });
             
+            const shareData = {
+                files: [file],
+                title: member.isEqualSplit ? 'Equal Split Payment' : `Payment Request - ${member.name}`,
+                text: message
+            };
+            
+            console.log('Split share data:', shareData);
+            console.log('Split can share?', navigator.canShare ? navigator.canShare(shareData) : 'canShare not available');
+            
             if (navigator.share) {
                 try {
-                    await navigator.share({
-                        files: [file],
-                        title: member.isEqualSplit ? 'Equal Split Payment' : `Payment Request - ${member.name}`,
-                        text: message
-                    });
+                    await navigator.share(shareData);
                 } catch (err) {
                     console.log('Share cancelled or failed:', err);
                 }
@@ -3889,13 +3894,19 @@
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
                 const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
                 
+                // Check what can be shared
+                const shareData = {
+                    files: [file],
+                    title: 'UPI Payment Request',
+                    text: message
+                };
+                
+                console.log('Share data:', shareData);
+                console.log('Can share?', navigator.canShare ? navigator.canShare(shareData) : 'canShare not available');
+                
                 if (navigator.share) {
                     try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'UPI Payment Request',
-                            text: message
-                        });
+                        await navigator.share(shareData);
                     } catch (err) {
                         if (err.name === 'AbortError') {
                             return;
