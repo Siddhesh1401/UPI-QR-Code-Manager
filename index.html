@@ -3208,11 +3208,14 @@
         async function shareIndividualQR(index) {
             const member = generatedGroupQRs[index];
             
+            // Create UPI link
+            const upiLink = `upi://pay?pa=${encodeURIComponent(splitSelectedProfile.upiId)}&pn=${encodeURIComponent(splitSelectedProfile.name)}&am=${member.amount}&cu=INR`;
+            
             let message;
             if (member.isEqualSplit) {
-                message = `💵 *Split Bill Payment*\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
+                message = `💵 *Split Bill Payment*\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n📦 Scan QR above or 🔗 Click link below:\n\n👉 ${upiLink}\n\n✅ Use either method - both instant!`;
             } else {
-                message = `💵 *Payment for ${member.name}*\n\n💰 Amount: *₹${member.amount}*\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
+                message = `💵 *Payment for ${member.name}*\n\n💰 Amount: *₹${member.amount}*\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n📦 Scan QR above or 🔗 Click link below:\n\n👉 ${upiLink}\n\n✅ Use either method - both instant!`;
             }
             
             // Convert base64 to blob
