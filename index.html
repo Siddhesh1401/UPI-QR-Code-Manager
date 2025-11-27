@@ -3878,20 +3878,16 @@
                 ctx.font = 'bold 36px Inter, sans-serif';
                 ctx.fillText(`₹${currentQRInfo.amount}`, infoLeft, infoY + 140);
                 
-                // Create full UPI link (no shortening)
-                const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-                
-                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
-                
-                // Convert canvas to blob using fetch (same method as split function)
+                // Convert canvas to blob FIRST (same method as split function)
                 const dataUrl = styledCanvas.toDataURL('image/png');
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
-                // Small delay to ensure file is ready
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Create message AFTER file is ready
+                const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
+                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
                 
                 if (navigator.share) {
                     try {
