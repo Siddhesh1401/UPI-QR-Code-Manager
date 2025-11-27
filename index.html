@@ -3211,14 +3211,11 @@
         async function shareIndividualQR(index) {
             const member = generatedGroupQRs[index];
             
-            // Create UPI link
-            const upiLink = `upi://pay?pa=${encodeURIComponent(splitSelectedProfile.upiId)}&pn=${encodeURIComponent(splitSelectedProfile.name)}&am=${member.amount}&cu=INR`;
-            
             let message;
             if (member.isEqualSplit) {
-                message = `💵 Split Bill Payment\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
+                message = `💵 Split Bill Payment\n\n👥 ${member.numPeople} people × ₹${member.amount} each\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
             } else {
-                message = `💵 Payment for ${member.name}\n\n💰 Amount: ₹${member.amount}\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
+                message = `💵 Payment for ${member.name}\n\n💰 Amount: ₹${member.amount}\n🏪 ${splitSelectedProfile.name}\n🆔 ${splitSelectedProfile.upiId}`;
             }
             
             // Convert base64 to blob
@@ -3893,9 +3890,8 @@
                 const fileName = `upi-payment-${currentQRInfo.name.replace(/\s+/g, '-')}.png`;
                 const file = new File([blob], fileName, { type: 'image/png' });
                 
-                // Create message AFTER file is ready
-                const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
-                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n🔗 Payment Link:\n${upiLink}`;
+                // Create simple message
+                const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}`;
                 
                 // Check what can be shared
                 const shareData = {
