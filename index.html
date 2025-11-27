@@ -3892,44 +3892,24 @@
                 // Create simple message
                 const message = `💳 UPI Payment Request\n\n👤 Pay to: ${currentQRInfo.name}\n💰 Amount: ₹${currentQRInfo.amount}\n🆔 UPI ID: ${currentQRInfo.upiId}`;
                 
-                // Check what can be shared
-                const shareData = {
-                    files: [file],
-                    title: 'UPI Payment Request',
-                    text: message
-                };
-                
-                console.log('Share data:', shareData);
-                console.log('Can share?', navigator.canShare ? navigator.canShare(shareData) : 'canShare not available');
+                closeShareModal(); // Close modal before sharing
                 
                 if (navigator.share) {
                     try {
-                        closeShareModal(); // Close modal right before sharing
-                        await navigator.share(shareData);
+                        await navigator.share({
+                            files: [file],
+                            title: 'UPI Payment Request',
+                            text: message
+                        });
                     } catch (err) {
-                        if (err.name === 'AbortError') {
-                            return;
-                        }
                         console.log('Share cancelled or failed:', err);
-                        // Fallback: download and copy
-                        const link = document.createElement('a');
-                        link.href = dataUrl;
-                        link.download = fileName;
-                        link.click();
-                        if (navigator.clipboard) {
-                            await navigator.clipboard.writeText(message);
-                        }
-                        alert('✅ QR downloaded!\n\nMessage copied to clipboard');
                     }
                 } else {
-                    // Fallback: download and copy
+                    // Fallback: download
                     const link = document.createElement('a');
                     link.href = dataUrl;
                     link.download = fileName;
                     link.click();
-                    if (navigator.clipboard) {
-                        await navigator.clipboard.writeText(message);
-                    }
                     alert('✅ QR downloaded!\n\nShare this message:\n' + message);
                 }
             } catch (error) {
