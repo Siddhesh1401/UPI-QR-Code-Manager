@@ -3906,14 +3906,18 @@
                 
                 if (navigator.share) {
                     try {
+                        console.log('Sharing files:', [file, dummyFile]);
+                        console.log('Message:', message);
                         // Share QR + tiny dummy file (Android needs multiple files to show text)
                         await navigator.share({
                             files: [file, dummyFile],
                             title: 'UPI Payment Request',
                             text: message
                         });
+                        console.log('Share success!');
                     } catch (err) {
-                        console.log('Share cancelled or failed:', err);
+                        console.error('Share error:', err);
+                        alert('Share error: ' + err.message);
                     }
                 } else {
                     // Fallback: download
