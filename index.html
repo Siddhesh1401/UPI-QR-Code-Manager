@@ -4213,21 +4213,24 @@
                 // Create custom message
                 const message = `💳 *UPI Payment Request*\n\n👤 Pay to: *${currentQRInfo.name}*\n💰 Amount: *₹${currentQRInfo.amount}*\n🆔 UPI ID: ${currentQRInfo.upiId}\n\n📱 Scan the QR code to pay instantly!`;
 
-                // Check if Web Share API is supported
+                // Try sharing with Web Share API
                 if (navigator.share) {
-                    // Try sharing with file and message
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
                         await navigator.share({
                             files: [file],
                             title: 'UPI Payment QR Code',
                             text: message
                         });
-                    } else {
-                        // Share only message, then download
-                        await navigator.share({
-                            title: 'UPI Payment Request',
-                            text: message
-                        });
+                    } catch (shareError) {
+                        if (shareError.name === 'AbortError') {
+                            return;
+                        }
+                        // If file sharing fails, fallback to download
+                        console.log('File share failed, downloading instead:', shareError);
+                        if (navigator.clipboard) {
+                            await navigator.clipboard.writeText(message);
+                            alert('✅ Payment details copied to clipboard!\nDownloading QR code...');
+                        }
                         downloadQR();
                     }
                 } else {
