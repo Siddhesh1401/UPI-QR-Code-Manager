@@ -3895,8 +3895,9 @@
                 
                 if (navigator.share) {
                     try {
+                        // Test with multiple files like split does
                         await navigator.share({
-                            files: [file],
+                            files: [file, file],
                             title: 'UPI Payment Request',
                             text: message
                         });
