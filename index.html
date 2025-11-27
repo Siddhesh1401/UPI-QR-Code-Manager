@@ -3896,7 +3896,7 @@
                 const dummyData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
                 const dummyResponse = await fetch(dummyData);
                 const dummyBlob = await dummyResponse.blob();
-                const dummyFile = new File([dummyBlob], '.info.png', { type: 'image/png' });
+                const dummyFile = new File([dummyBlob], `payment-info-${currentQRInfo.amount}.png`, { type: 'image/png' });
                 
                 // Create message with UPI link
                 const upiLink = `upi://pay?pa=${encodeURIComponent(currentQRInfo.upiId)}&pn=${encodeURIComponent(currentQRInfo.name)}&am=${currentQRInfo.amount}&cu=INR`;
