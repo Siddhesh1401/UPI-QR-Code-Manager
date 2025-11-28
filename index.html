@@ -4904,115 +4904,196 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                const width = 400;
-                const height = 600;
+                const width = 500;
+                const height = 750;
                 canvas.width = width;
                 canvas.height = height;
                 
-                // White background
-                ctx.fillStyle = '#ffffff';
+                // Background with subtle gradient
+                const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+                bgGradient.addColorStop(0, '#f8fafc');
+                bgGradient.addColorStop(1, '#e2e8f0');
+                ctx.fillStyle = bgGradient;
                 ctx.fillRect(0, 0, width, height);
                 
-                // Header gradient bar
-                const headerGradient = ctx.createLinearGradient(0, 0, width, 80);
+                // Main card with shadow effect
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 30;
+                ctx.shadowOffsetY = 10;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.roundRect(20, 20, width - 40, height - 40, 20);
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                
+                // Header gradient section
+                const headerGradient = ctx.createLinearGradient(20, 20, width - 20, 120);
                 headerGradient.addColorStop(0, '#667eea');
                 headerGradient.addColorStop(1, '#764ba2');
                 ctx.fillStyle = headerGradient;
-                ctx.fillRect(0, 0, width, 80);
+                ctx.beginPath();
+                ctx.roundRect(20, 20, width - 40, 100, [20, 20, 0, 0]);
+                ctx.fill();
+                
+                // Decorative circles in header
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.beginPath();
+                ctx.arc(width - 60, 50, 60, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(80, 100, 40, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Header icon (checkmark in circle)
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.beginPath();
+                ctx.arc(width / 2, 70, 35, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('✓', width / 2, 82);
                 
                 // Header text
                 ctx.fillStyle = 'white';
-                ctx.font = 'bold 24px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Payment Receipt', width / 2, 50);
+                ctx.font = 'bold 18px sans-serif';
+                ctx.fillText('PAYMENT RECEIPT', width / 2, 110);
                 
-                // Receipt ID
+                // Receipt ID badge
+                ctx.fillStyle = '#f1f5f9';
+                ctx.beginPath();
+                ctx.roundRect(width / 2 - 80, 135, 160, 28, 14);
+                ctx.fill();
+                
                 const receiptId = 'RCP' + Date.now().toString().slice(-8);
                 ctx.fillStyle = '#64748b';
                 ctx.font = '12px sans-serif';
-                ctx.fillText(`Receipt #${receiptId}`, width / 2, 110);
+                ctx.fillText(`Receipt #${receiptId}`, width / 2, 154);
                 
-                // Date & Time
+                // Amount section with highlight
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath();
+                ctx.roundRect(40, 180, width - 80, 100, 16);
+                ctx.fill();
+                
+                // Amount border accent
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(40, 180, width - 80, 100, 16);
+                ctx.stroke();
+                
+                // Amount label
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('Amount', width / 2, 210);
+                
+                // Amount value
+                const amountGradient = ctx.createLinearGradient(0, 230, 0, 270);
+                amountGradient.addColorStop(0, '#667eea');
+                amountGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = amountGradient;
+                ctx.font = 'bold 52px sans-serif';
+                ctx.fillText(`₹${currentQRInfo.amount}`, width / 2, 265);
+                
+                // Status badge
+                ctx.fillStyle = '#dcfce7';
+                ctx.beginPath();
+                ctx.roundRect(width / 2 - 60, 295, 120, 32, 16);
+                ctx.fill();
+                
+                ctx.fillStyle = '#16a34a';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('✓ Requested', width / 2, 316);
+                
+                // Divider with dots pattern
+                ctx.fillStyle = '#e2e8f0';
+                for (let x = 50; x < width - 50; x += 8) {
+                    ctx.beginPath();
+                    ctx.arc(x, 350, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Details section header
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('Payment Details', 50, 385);
+                
+                // Detail rows with icons
+                const details = [
+                    { icon: '👤', label: 'Recipient', value: currentQRInfo.name },
+                    { icon: '🆔', label: 'UPI ID', value: currentQRInfo.upiId },
+                    { icon: '💰', label: 'Amount', value: `₹${currentQRInfo.amount}` },
+                    { icon: '📱', label: 'Method', value: 'UPI QR Code' }
+                ];
+                
+                let y = 420;
+                details.forEach(item => {
+                    // Row background
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath();
+                    ctx.roundRect(40, y - 18, width - 80, 40, 8);
+                    ctx.fill();
+                    
+                    // Icon
+                    ctx.font = '16px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(item.icon, 55, y + 6);
+                    
+                    // Label
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '13px sans-serif';
+                    ctx.fillText(item.label, 85, y + 5);
+                    
+                    // Value
+                    ctx.fillStyle = '#1e293b';
+                    ctx.font = '13px sans-serif';
+                    ctx.textAlign = 'right';
+                    // Truncate long values
+                    let displayValue = item.value;
+                    if (displayValue.length > 25) {
+                        displayValue = displayValue.substring(0, 22) + '...';
+                    }
+                    ctx.fillText(displayValue, width - 55, y + 5);
+                    y += 50;
+                });
+                
+                // Date & Time section
                 const now = new Date();
                 const dateStr = now.toLocaleDateString('en-IN', { 
+                    weekday: 'short',
                     day: '2-digit', 
                     month: 'short', 
                     year: 'numeric' 
                 });
                 const timeStr = now.toLocaleTimeString('en-IN', { 
                     hour: '2-digit', 
-                    minute: '2-digit' 
+                    minute: '2-digit',
+                    hour12: true
                 });
-                ctx.fillText(`${dateStr} at ${timeStr}`, width / 2, 130);
                 
-                // Divider line
-                ctx.strokeStyle = '#e2e8f0';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(30, 150);
-                ctx.lineTo(width - 30, 150);
-                ctx.stroke();
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${dateStr} • ${timeStr}`, width / 2, y + 20);
                 
-                // Amount - Large display
+                // Decorative bottom divider
+                ctx.fillStyle = '#e2e8f0';
+                for (let x = 50; x < width - 50; x += 8) {
+                    ctx.beginPath();
+                    ctx.arc(x, y + 50, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Footer section
                 ctx.fillStyle = '#667eea';
-                ctx.font = 'bold 48px sans-serif';
-                ctx.fillText(`₹${currentQRInfo.amount}`, width / 2, 210);
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillText('UPI QR Manager', width / 2, height - 55);
                 
-                // Status badge
-                ctx.fillStyle = '#dcfce7';
-                const badgeWidth = 100;
-                const badgeX = (width - badgeWidth) / 2;
-                ctx.beginPath();
-                ctx.roundRect(badgeX, 230, badgeWidth, 30, 15);
-                ctx.fill();
-                
-                ctx.fillStyle = '#16a34a';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.fillText('✓ Requested', width / 2, 250);
-                
-                // Details section
-                ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.textAlign = 'left';
-                ctx.fillText('Payment Details', 30, 300);
-                
-                // Detail rows
-                const details = [
-                    { label: 'Pay To', value: currentQRInfo.name },
-                    { label: 'UPI ID', value: currentQRInfo.upiId },
-                    { label: 'Amount', value: `₹${currentQRInfo.amount}` },
-                    { label: 'Method', value: 'UPI QR Code' },
-                    { label: 'Status', value: 'Payment Requested' }
-                ];
-                
-                let y = 330;
-                details.forEach(item => {
-                    ctx.fillStyle = '#64748b';
-                    ctx.font = '13px sans-serif';
-                    ctx.textAlign = 'left';
-                    ctx.fillText(item.label, 30, y);
-                    
-                    ctx.fillStyle = '#1e293b';
-                    ctx.font = '13px sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(item.value, width - 30, y);
-                    y += 30;
-                });
-                
-                // Dotted divider
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(30, y + 10);
-                ctx.lineTo(width - 30, y + 10);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                // Footer
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '11px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Generated by UPI QR Manager', width / 2, height - 40);
-                ctx.fillText('Thank you for using our service!', width / 2, height - 22);
+                ctx.fillText('Quick & Secure UPI Payments', width / 2, height - 35);
                 
                 // Store canvas for download/share
                 currentReceiptCanvas = canvas;
