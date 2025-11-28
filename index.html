@@ -3284,32 +3284,88 @@
             showGroupQRResults();
         }
         
-        // Reusable function to create consistent styled QR cards
-        async function createStyledQRCard(qrCanvas, qrImg, displayName, amount) {
+        // Reusable function to create professional styled QR cards for sharing
+        async function createStyledQRCard(qrCanvas, qrImg, displayName, amount, upiId = '') {
             const cardCanvas = document.createElement('canvas');
             const ctx = cardCanvas.getContext('2d');
             
-            const size = 512;
-            const qrSize = 320;
-            cardCanvas.width = size;
-            cardCanvas.height = size;
+            const width = 600;
+            const height = 800;
+            const qrSize = 340;
+            cardCanvas.width = width;
+            cardCanvas.height = height;
             
-            // Background gradient
-            const gradient = ctx.createLinearGradient(0, 0, size, size);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, size, size);
+            // Background - clean gradient
+            const bgGradient = ctx.createLinearGradient(0, 0, width, height);
+            bgGradient.addColorStop(0, '#667eea');
+            bgGradient.addColorStop(0.5, '#764ba2');
+            bgGradient.addColorStop(1, '#667eea');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, width, height);
             
-            // White card container
-            ctx.fillStyle = 'white';
-            const padding = 40;
-            ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
+            // Decorative circles
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.beginPath();
+            ctx.arc(-50, -50, 200, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(width + 50, height + 50, 250, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Main white card with rounded corners
+            const cardMargin = 30;
+            const cardRadius = 30;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(cardMargin, cardMargin, width - cardMargin * 2, height - cardMargin * 2, cardRadius);
+            ctx.fill();
+            
+            // Add subtle shadow effect (inner glow simulation)
+            ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(cardMargin, cardMargin, width - cardMargin * 2, height - cardMargin * 2, cardRadius);
+            ctx.stroke();
+            
+            // Header section with gradient bar
+            const headerGradient = ctx.createLinearGradient(cardMargin, 0, width - cardMargin, 0);
+            headerGradient.addColorStop(0, '#667eea');
+            headerGradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = headerGradient;
+            ctx.beginPath();
+            ctx.roundRect(cardMargin, cardMargin, width - cardMargin * 2, 80, [cardRadius, cardRadius, 0, 0]);
+            ctx.fill();
+            
+            // Header text - "Scan to Pay"
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Scan to Pay', width / 2, 85);
+            
+            // QR Code container with shadow
+            const qrX = (width - qrSize) / 2;
+            const qrY = 140;
+            
+            // QR shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.beginPath();
+            ctx.roundRect(qrX - 5, qrY + 5, qrSize + 10, qrSize + 10, 16);
+            ctx.fill();
+            
+            // QR white background
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 16);
+            ctx.fill();
+            
+            // QR border
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 16);
+            ctx.stroke();
             
             // Draw QR code
-            const qrX = (size - qrSize) / 2;
-            const qrY = 80;
-            
             if (qrCanvas) {
                 ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             } else if (qrImg) {
@@ -3323,16 +3379,62 @@
                 });
             }
             
-            // Draw name
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 22px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(displayName, size / 2, qrY + qrSize + 35);
+            // Amount badge
+            const amountY = qrY + qrSize + 50;
+            const amountText = `₹${amount}`;
+            ctx.font = 'bold 52px sans-serif';
+            const amountWidth = ctx.measureText(amountText).width;
             
-            // Draw amount
+            // Amount background pill
+            const pillPadding = 30;
+            const pillHeight = 70;
+            const pillWidth = amountWidth + pillPadding * 2;
+            const pillX = (width - pillWidth) / 2;
+            
+            const amountGradient = ctx.createLinearGradient(pillX, amountY - 10, pillX + pillWidth, amountY + pillHeight);
+            amountGradient.addColorStop(0, '#667eea');
+            amountGradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = amountGradient;
+            ctx.beginPath();
+            ctx.roundRect(pillX, amountY - 10, pillWidth, pillHeight, 35);
+            ctx.fill();
+            
+            // Amount text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 42px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(amountText, width / 2, amountY + 40);
+            
+            // Payee name
+            const nameY = amountY + pillHeight + 35;
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 26px sans-serif';
+            ctx.fillText(displayName, width / 2, nameY);
+            
+            // UPI ID if provided
+            if (upiId) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '18px sans-serif';
+                ctx.fillText(upiId, width / 2, nameY + 32);
+            }
+            
+            // Divider line
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(60, height - 120);
+            ctx.lineTo(width - 60, height - 120);
+            ctx.stroke();
+            
+            // Footer - Payment methods icons (simulated with text)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Pay using any UPI app', width / 2, height - 85);
+            
+            // UPI logo/badge
             ctx.fillStyle = '#667eea';
-            ctx.font = 'bold 32px sans-serif';
-            ctx.fillText(`₹${amount}`, size / 2, qrY + qrSize + 70);
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText('💳 UPI QR Manager', width / 2, height - 55);
             
             return cardCanvas;
         }
@@ -4074,58 +4176,10 @@
                     return;
                 }
                 
-                // Use same consistent professional design as split calculator
-                const sourceElement = canvas || img;
-                const styledCanvas = document.createElement('canvas');
-                const ctx = styledCanvas.getContext('2d');
+                // Use the professional styled QR card
+                const styledCanvas = await createStyledQRCard(canvas, img, currentQRInfo.name, currentQRInfo.amount, currentQRInfo.upiId);
                 
-                const size = 512;
-                const qrSize = 320;
-                
-                styledCanvas.width = size;
-                styledCanvas.height = size;
-                
-                // Background gradient (same as split calculator)
-                const gradient = ctx.createLinearGradient(0, 0, size, size);
-                gradient.addColorStop(0, '#667eea');
-                gradient.addColorStop(1, '#764ba2');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, size, size);
-                
-                // White card container
-                ctx.fillStyle = 'white';
-                const padding = 40;
-                ctx.fillRect(padding, padding, size - padding * 2, size - padding * 2);
-                
-                // Draw QR code
-                const qrX = (size - qrSize) / 2;
-                const qrY = 80;
-                
-                if (canvas) {
-                    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
-                } else if (img) {
-                    await new Promise((resolve) => {
-                        const tempImg = new Image();
-                        tempImg.onload = () => {
-                            ctx.drawImage(tempImg, qrX, qrY, qrSize, qrSize);
-                            resolve();
-                        };
-                        tempImg.src = img.src;
-                    });
-                }
-                
-                // Draw name
-                ctx.fillStyle = '#1e293b';
-                ctx.font = 'bold 22px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(currentQRInfo.name, size / 2, qrY + qrSize + 35);
-                
-                // Draw amount
-                ctx.fillStyle = '#667eea';
-                ctx.font = 'bold 32px sans-serif';
-                ctx.fillText(`₹${currentQRInfo.amount}`, size / 2, qrY + qrSize + 70);
-                
-                // Convert canvas to blob FIRST (same method as split function)
+                // Convert canvas to blob
                 const dataUrl = styledCanvas.toDataURL('image/png');
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
