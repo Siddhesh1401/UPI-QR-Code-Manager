@@ -1,5 +1,5 @@
 // Service Worker for UPI QR Manager PWA
-const CACHE_NAME = 'upi-qr-manager-v213';
+const CACHE_NAME = 'upi-qr-manager-v214';
 
 // Detect base path
 const baseUrl = self.location.origin + self.registration.scope;
@@ -7,6 +7,7 @@ const baseUrl = self.location.origin + self.registration.scope;
 const urlsToCache = [
   baseUrl,
   baseUrl + 'index.html',
+  baseUrl + 'offline.html',
   baseUrl + 'manifest.json',
   baseUrl + 'icon.svg',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
@@ -45,8 +46,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - serve from cache, fallback to network, then offline page
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -76,8 +80,13 @@ self.addEventListener('fetch', (event) => {
         });
       })
       .catch(() => {
-        // Return a custom offline page or message
-        return new Response('Offline - Please check your connection', {
+        // Return offline page for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match(baseUrl + 'offline.html');
+        }
+        
+        // Return a custom error response for other requests
+        return new Response('Offline - Resource unavailable', {
           status: 503,
           statusText: 'Service Unavailable',
           headers: new Headers({
