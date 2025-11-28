@@ -1693,19 +1693,10 @@
     <div class="header">
         <h1>💳 UPI Manager</h1>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button class="add-btn" id="themeToggle" onclick="toggleTheme()" style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); color: #fbbf24; padding: 12px 20px;">
-                🌙
-            </button>
-            <button class="add-btn" onclick="location.reload()" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px 20px;">
-                🔄
-            </button>
-            <button class="add-btn" onclick="openSplitCalculator()" style="background: rgba(72, 187, 120, 0.1); border: 2px solid rgba(72, 187, 120, 0.3); color: #48bb78; padding: 12px 20px;">
-                🧮
-            </button>
-            <button class="add-btn" onclick="openSettingsModal()" style="background: rgba(139, 92, 246, 0.1); border: 2px solid rgba(139, 92, 246, 0.3); color: #a78bfa; padding: 12px 20px;">
-                ⚙️
-            </button>
             <button class="add-btn" onclick="openAddModal()">+ Add UPI</button>
+            <button class="add-btn" onclick="openToolsModal()" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); color: #a78bfa; padding: 12px 16px;">
+                ☰
+            </button>
         </div>
     </div>
 
@@ -2136,10 +2127,83 @@
                 <button class="qr-display-btn" onclick="generatePaymentLink()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                     🔗 Link
                 </button>
-                <button class="qr-display-btn" onclick="generateReceipt()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
-                    🧾 Receipt
+            </div>
+        </div>
+    </div>
+
+    <!-- Tools/Menu Modal -->
+    <div id="toolsModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Tools & Features</h2>
+                <button class="close-btn" onclick="closeToolsModal()">&times;</button>
+            </div>
+            
+            <div style="display: grid; gap: 12px;">
+                <button onclick="openQRHistory(); closeToolsModal();" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 12px; color: #a78bfa; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <span style="font-size: 1.5rem;">📜</span>
+                    <div style="text-align: left;">
+                        <div>QR History</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 400;">View generated QRs & receipts</div>
+                    </div>
+                </button>
+                
+                <button onclick="openSplitCalculator(); closeToolsModal();" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%); border: 2px solid rgba(72, 187, 120, 0.3); border-radius: 12px; color: #48bb78; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <span style="font-size: 1.5rem;">🧮</span>
+                    <div style="text-align: left;">
+                        <div>Split Calculator</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 400;">Split bills among friends</div>
+                    </div>
+                </button>
+                
+                <button onclick="openSettingsModal(); closeToolsModal();" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; color: #818cf8; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <span style="font-size: 1.5rem;">⚙️</span>
+                    <div style="text-align: left;">
+                        <div>Settings</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 400;">App preferences & PIN</div>
+                    </div>
+                </button>
+                
+                <button onclick="toggleTheme(); closeToolsModal();" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%); border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 12px; color: #fbbf24; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <span style="font-size: 1.5rem;">🌙</span>
+                    <div style="text-align: left;">
+                        <div>Toggle Theme</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 400;">Switch dark/light mode</div>
+                    </div>
+                </button>
+                
+                <button onclick="location.reload()" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); border: 2px solid rgba(16, 185, 129, 0.3); border-radius: 12px; color: #10b981; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <span style="font-size: 1.5rem;">🔄</span>
+                    <div style="text-align: left;">
+                        <div>Refresh App</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7; font-weight: 400;">Reload application</div>
+                    </div>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- QR History Modal -->
+    <div id="qrHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; max-height: 85vh;">
+            <div class="modal-header">
+                <h2>📜 QR History</h2>
+                <button class="close-btn" onclick="closeQRHistory()">&times;</button>
+            </div>
+            
+            <div id="qrHistoryList" style="display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
+                <!-- History items will be rendered here -->
+            </div>
+            
+            <div id="qrHistoryEmpty" style="text-align: center; padding: 40px 20px; color: #94a3b8; display: none;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">📭</div>
+                <p>No QR codes generated yet</p>
+                <p style="font-size: 0.85rem; opacity: 0.7;">Generated QR codes will appear here</p>
+            </div>
+            
+            <button onclick="clearQRHistory()" style="margin-top: 16px; width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 10px; color: #f87171; font-weight: 600; cursor: pointer; display: none;" id="clearHistoryBtn">
+                🗑️ Clear History
+            </button>
         </div>
     </div>
 
@@ -2733,10 +2797,9 @@
                 return;
             }
             
-            // UPI ID format validation
-            const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
-            if (!upiRegex.test(upiId)) {
-                showToast('Invalid UPI ID format (e.g., name@bank)', 'error');
+            // UPI ID format validation - just needs @ symbol
+            if (!upiId.includes('@')) {
+                showToast('UPI ID must contain @ symbol', 'error');
                 return;
             }
 
@@ -4177,6 +4240,9 @@
                         document.getElementById('qrDisplayUPI').textContent = currentQRInfo.upiId;
                         document.getElementById('qrDisplayAmount').textContent = `₹${currentQRInfo.amount}`;
                         
+                        // Save to QR history
+                        addToQRHistory(currentQRInfo);
+                        
                         closePaymentModal();
                         document.getElementById('qrDisplayModal').classList.add('active');
                         hideLoading();
@@ -4982,6 +5048,352 @@
         document.getElementById('receiptModal').addEventListener('click', function(e) {
             if (e.target === this) closeReceiptModal();
         });
+        
+        document.getElementById('toolsModal').addEventListener('click', function(e) {
+            if (e.target === this) closeToolsModal();
+        });
+        
+        document.getElementById('qrHistoryModal').addEventListener('click', function(e) {
+            if (e.target === this) closeQRHistory();
+        });
+        
+        // ==========================================
+        // TOOLS MODAL
+        // ==========================================
+        function openToolsModal() {
+            document.getElementById('toolsModal').classList.add('active');
+        }
+        
+        function closeToolsModal() {
+            document.getElementById('toolsModal').classList.remove('active');
+        }
+        
+        // ==========================================
+        // QR HISTORY SYSTEM
+        // ==========================================
+        let qrHistory = [];
+        
+        function loadQRHistory() {
+            const saved = localStorage.getItem('qrHistory');
+            if (saved) {
+                qrHistory = JSON.parse(saved);
+            }
+        }
+        
+        function saveQRHistory() {
+            localStorage.setItem('qrHistory', JSON.stringify(qrHistory));
+        }
+        
+        function addToQRHistory(qrInfo) {
+            const historyItem = {
+                id: Date.now(),
+                name: qrInfo.name,
+                upiId: qrInfo.upiId,
+                amount: qrInfo.amount,
+                timestamp: new Date().toISOString(),
+                status: 'pending' // pending, received
+            };
+            qrHistory.unshift(historyItem); // Add to beginning
+            
+            // Keep only last 50 entries
+            if (qrHistory.length > 50) {
+                qrHistory = qrHistory.slice(0, 50);
+            }
+            
+            saveQRHistory();
+        }
+        
+        function openQRHistory() {
+            loadQRHistory();
+            renderQRHistory();
+            document.getElementById('qrHistoryModal').classList.add('active');
+        }
+        
+        function closeQRHistory() {
+            document.getElementById('qrHistoryModal').classList.remove('active');
+        }
+        
+        function renderQRHistory() {
+            const list = document.getElementById('qrHistoryList');
+            const emptyState = document.getElementById('qrHistoryEmpty');
+            const clearBtn = document.getElementById('clearHistoryBtn');
+            
+            if (qrHistory.length === 0) {
+                list.style.display = 'none';
+                emptyState.style.display = 'block';
+                clearBtn.style.display = 'none';
+                return;
+            }
+            
+            list.style.display = 'flex';
+            emptyState.style.display = 'none';
+            clearBtn.style.display = 'block';
+            
+            list.innerHTML = qrHistory.map((item, index) => {
+                const date = new Date(item.timestamp);
+                const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                
+                const statusColor = item.status === 'received' ? '#10b981' : '#f59e0b';
+                const statusText = item.status === 'received' ? '✓ Received' : '⏳ Pending';
+                const statusBg = item.status === 'received' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+                
+                return `
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div>
+                                <div style="color: #e2e8f0; font-weight: 600; font-size: 1.1rem;">${item.name}</div>
+                                <div style="color: #94a3b8; font-size: 0.85rem;">${item.upiId}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #667eea; font-weight: 700; font-size: 1.3rem;">₹${item.amount}</div>
+                                <div style="color: #64748b; font-size: 0.75rem;">${dateStr} ${timeStr}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span style="padding: 4px 12px; background: ${statusBg}; color: ${statusColor}; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                ${statusText}
+                            </span>
+                            ${item.status === 'pending' ? `
+                                <button onclick="confirmPayment(${index})" style="flex: 1; padding: 8px 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                    ✓ Confirm Received
+                                </button>
+                            ` : `
+                                <button onclick="generateHistoryReceipt(${index})" style="flex: 1; padding: 8px 12px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                    🧾 View Receipt
+                                </button>
+                            `}
+                            <button onclick="deleteHistoryItem(${index})" style="padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: 8px; cursor: pointer;">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function confirmPayment(index) {
+            qrHistory[index].status = 'received';
+            qrHistory[index].receivedAt = new Date().toISOString();
+            saveQRHistory();
+            renderQRHistory();
+            showToast('Payment marked as received!', 'success');
+            
+            // Auto-generate receipt
+            generateHistoryReceipt(index);
+        }
+        
+        function generateHistoryReceipt(index) {
+            const item = qrHistory[index];
+            
+            // Set currentQRInfo for receipt generation
+            currentQRInfo = {
+                name: item.name,
+                upiId: item.upiId,
+                amount: item.amount
+            };
+            
+            // Generate improved receipt
+            generateImprovedReceipt(item);
+        }
+        
+        function deleteHistoryItem(index) {
+            if (confirm('Delete this history item?')) {
+                qrHistory.splice(index, 1);
+                saveQRHistory();
+                renderQRHistory();
+                showToast('Item deleted', 'info');
+            }
+        }
+        
+        function clearQRHistory() {
+            if (confirm('Clear all QR history? This cannot be undone.')) {
+                qrHistory = [];
+                saveQRHistory();
+                renderQRHistory();
+                showToast('History cleared', 'info');
+            }
+        }
+        
+        // ==========================================
+        // IMPROVED RECEIPT GENERATOR
+        // ==========================================
+        function generateImprovedReceipt(historyItem) {
+            showLoading('Generating receipt...');
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const width = 440;
+                const height = 700;
+                canvas.width = width;
+                canvas.height = height;
+                
+                // White background with subtle texture
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Top gradient header
+                const headerGradient = ctx.createLinearGradient(0, 0, width, 120);
+                headerGradient.addColorStop(0, '#667eea');
+                headerGradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = headerGradient;
+                ctx.fillRect(0, 0, width, 120);
+                
+                // Header icon circle
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath();
+                ctx.arc(width / 2, 55, 35, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Checkmark
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 36px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('✓', width / 2, 68);
+                
+                // Header text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 18px sans-serif';
+                ctx.fillText('Payment Received', width / 2, 105);
+                
+                // Receipt ID
+                const receiptId = 'RCP-' + historyItem.id.toString().slice(-8);
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(`Receipt #${receiptId}`, width / 2, 145);
+                
+                // Date & Time
+                const receivedDate = historyItem.receivedAt ? new Date(historyItem.receivedAt) : new Date(historyItem.timestamp);
+                const dateStr = receivedDate.toLocaleDateString('en-IN', { 
+                    weekday: 'long',
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                const timeStr = receivedDate.toLocaleTimeString('en-IN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(`${dateStr}`, width / 2, 165);
+                ctx.fillText(`at ${timeStr}`, width / 2, 182);
+                
+                // Amount section with green background
+                ctx.fillStyle = '#f0fdf4';
+                ctx.fillRect(30, 200, width - 60, 100);
+                
+                // Amount border
+                ctx.strokeStyle = '#86efac';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(30, 200, width - 60, 100);
+                
+                // Amount label
+                ctx.fillStyle = '#16a34a';
+                ctx.font = '14px sans-serif';
+                ctx.fillText('Amount Received', width / 2, 230);
+                
+                // Amount value
+                ctx.fillStyle = '#15803d';
+                ctx.font = 'bold 48px sans-serif';
+                ctx.fillText(`₹${historyItem.amount}`, width / 2, 280);
+                
+                // Divider with decorative dots
+                ctx.fillStyle = '#e2e8f0';
+                for (let i = 40; i < width - 40; i += 8) {
+                    ctx.beginPath();
+                    ctx.arc(i, 330, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Payment Details section
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('Payment Details', 30, 365);
+                
+                // Detail rows
+                const details = [
+                    { label: 'Paid To', value: historyItem.name },
+                    { label: 'UPI ID', value: historyItem.upiId },
+                    { label: 'Transaction ID', value: 'TXN' + historyItem.id },
+                    { label: 'Payment Method', value: 'UPI' },
+                    { label: 'Status', value: '✓ Successful', isGreen: true }
+                ];
+                
+                let y = 395;
+                details.forEach(item => {
+                    // Label
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '13px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(item.label, 30, y);
+                    
+                    // Value
+                    ctx.fillStyle = item.isGreen ? '#16a34a' : '#1e293b';
+                    ctx.font = item.isGreen ? 'bold 13px sans-serif' : '13px sans-serif';
+                    ctx.textAlign = 'right';
+                    
+                    // Truncate long values
+                    let displayValue = item.value;
+                    if (displayValue.length > 28) {
+                        displayValue = displayValue.substring(0, 25) + '...';
+                    }
+                    ctx.fillText(displayValue, width - 30, y);
+                    
+                    // Separator line
+                    ctx.strokeStyle = '#f1f5f9';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(30, y + 12);
+                    ctx.lineTo(width - 30, y + 12);
+                    ctx.stroke();
+                    
+                    y += 38;
+                });
+                
+                // Bottom decorative wave
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, height - 80, width, 80);
+                
+                // Footer branding
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Generated by UPI QR Manager', width / 2, height - 45);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '10px sans-serif';
+                ctx.fillText('Secure • Fast • Reliable', width / 2, height - 28);
+                
+                // Store canvas
+                currentReceiptCanvas = canvas;
+                
+                // Show preview
+                const preview = document.getElementById('receiptPreview');
+                preview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = canvas.toDataURL('image/png');
+                img.style.cssText = 'width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);';
+                preview.appendChild(img);
+                
+                // Update receipt modal title
+                document.querySelector('#receiptModal .modal-header h2').textContent = 'Payment Receipt';
+                
+                // Close history modal, show receipt
+                closeQRHistory();
+                hideLoading();
+                document.getElementById('receiptModal').classList.add('active');
+                showToast('Receipt generated!', 'success');
+                
+            } catch (error) {
+                handleError(error, 'Failed to generate receipt');
+            }
+        }
+
+        // Initialize - load QR history on start
+        loadQRHistory();
 
         // Initialize
         loadData();
